@@ -1,0 +1,2 @@
+# QualyDash
+Indicadores de Defeitos
