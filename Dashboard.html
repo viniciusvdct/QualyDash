@@ -2,17 +2,15 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Dashboard de Qualidade</title>
+<title>Quality·Dash — Dashboard de Qualidade</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;800;900&family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
-:root{
-  --bg:#0d1015; --panel:#161a23; --panel2:#1c2230; --line:#262d3d;
-  --ink:#eaecf2; --muted:#8b93a7; --dim:#5b6478;
-  --accent:#ff5b3a; --accent2:#ffd166; --good:#3ddc97; --bad:#ff5b6e; --info:#6cb6ff; --purple:#b07cff;
-}
+:root{--bg:#0d1015;--panel:#161a23;--panel2:#1c2230;--line:#262d3d;--ink:#eaecf2;--muted:#8b93a7;--dim:#5b6478;--accent:#ff5b3a;--accent2:#ffd166;--good:#3ddc97;--bad:#ff5b6e;--info:#6cb6ff;--purple:#b07cff}
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--ink);font-family:'Inter Tight',sans-serif;font-size:13.5px}
 .app{display:flex;flex-direction:column;min-height:100vh}
@@ -27,9 +25,8 @@ header.top{padding:16px 28px;border-bottom:1px solid var(--line);display:flex;al
 .fbtn input{display:none}
 .fbtn .dot{width:7px;height:7px;border-radius:50%;background:var(--dim)}
 .fbtn.ok .dot{background:var(--good);box-shadow:0 0 8px var(--good)}
-.refresh{background:var(--panel);border:1px solid var(--line);color:var(--muted);padding:8px 10px;border-radius:6px;cursor:pointer;font-size:13px;transition:.15s;display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px}
+.refresh{background:var(--panel);border:1px solid var(--line);color:var(--muted);padding:8px 10px;border-radius:6px;cursor:pointer;font-size:14px;transition:.15s;display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px}
 .refresh:hover{color:var(--accent);border-color:var(--accent);transform:rotate(90deg)}
-.refresh:disabled{opacity:.3;cursor:not-allowed}
 nav.tabs{display:flex;padding:0 28px;background:#10141b;border-bottom:1px solid var(--line);overflow-x:auto;gap:0}
 .tab{padding:14px 20px;cursor:pointer;color:var(--muted);font-weight:500;font-size:13px;border-bottom:2px solid transparent;white-space:nowrap;transition:.15s;letter-spacing:.01em}
 .tab:hover{color:var(--ink)}
@@ -39,38 +36,44 @@ nav.tabs{display:flex;padding:0 28px;background:#10141b;border-bottom:1px solid 
 .filters{padding:12px 28px;background:var(--panel);border-bottom:1px solid var(--line);display:flex;gap:12px;align-items:end;flex-wrap:wrap}
 .filt{display:flex;flex-direction:column;gap:5px;min-width:140px}
 .filt label{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
-.filt select,.filt input{background:var(--panel2);border:1px solid var(--line);color:var(--ink);padding:7px 10px;border-radius:5px;font-family:inherit;font-size:13px;outline:none;min-height:34px}
-.filt select:focus,.filt input:focus{border-color:var(--accent)}
+.filt select{background:var(--panel2);border:1px solid var(--line);color:var(--ink);padding:7px 10px;border-radius:5px;font-family:inherit;font-size:13px;outline:none;min-height:34px}
+.filt select:focus{border-color:var(--accent)}
 .multi-years{display:flex;gap:4px;flex-wrap:wrap;background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:4px;min-height:34px;align-items:center}
 .year-chip{padding:3px 9px;background:var(--panel);border:1px solid var(--line);border-radius:4px;cursor:pointer;font-size:12px;font-family:'JetBrains Mono',monospace;transition:.15s;user-select:none}
 .year-chip:hover{border-color:var(--accent)}
 .year-chip.active{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
-.filt-clear{background:transparent;border:1px solid var(--line);color:var(--muted);padding:7px 14px;border-radius:5px;cursor:pointer;font-family:inherit;font-size:12px;height:34px}
-.filt-clear:hover{color:var(--accent);border-color:var(--accent)}
-main{padding:24px 28px;flex:1}
+.filt-clear,.btn-pdf{background:transparent;border:1px solid var(--line);color:var(--muted);padding:7px 14px;border-radius:5px;cursor:pointer;font-family:inherit;font-size:12px;height:34px;transition:.15s}
+.filt-clear:hover,.btn-pdf:hover{color:var(--accent);border-color:var(--accent)}
+.btn-pdf{color:var(--info);border-color:var(--info)}
+.btn-pdf:hover{background:var(--info);color:#0d1015}
+.mode-toggle{display:flex;border:1px solid var(--line);border-radius:5px;overflow:hidden;height:34px}
+.mode-opt{padding:6px 12px;cursor:pointer;font-size:11.5px;font-weight:600;background:var(--panel);color:var(--muted);border-right:1px solid var(--line);transition:.15s;display:flex;align-items:center}
+.mode-opt:last-child{border-right:0}
+.mode-opt:hover{color:var(--ink)}
+.mode-opt.active{background:var(--accent);color:#fff}
+main{padding:28px 28px;flex:1}
 .empty{text-align:center;padding:80px 20px;color:var(--muted);border:2px dashed var(--line);border-radius:12px;margin:40px}
 .empty h2{font-family:'Fraunces',serif;font-weight:700;color:var(--ink);font-size:28px;margin:0 0 10px}
 .empty code{background:var(--panel);padding:2px 8px;border-radius:4px;color:var(--accent2);font-family:'JetBrains Mono',monospace;font-size:12px}
 .page{display:none}
 .page.active{display:block;animation:fade .25s ease}
 @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
-.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:20px}
-.kpi{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px;position:relative;overflow:hidden}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px;margin-bottom:24px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px 20px;position:relative;overflow:hidden}
 .kpi::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent)}
 .kpi.good::before{background:var(--good)}.kpi.bad::before{background:var(--bad)}.kpi.info::before{background:var(--info)}.kpi.warn::before{background:var(--accent2)}
 .kpi .lbl{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;font-weight:600;margin-bottom:6px}
 .kpi .val{font-family:'Fraunces',serif;font-weight:800;font-size:30px;letter-spacing:-.02em;line-height:1.05}
 .kpi .sub{font-size:11.5px;color:var(--dim);margin-top:4px;font-family:'JetBrains Mono',monospace}
-.grid{display:grid;gap:14px;margin-bottom:14px}
-.grid-2{grid-template-columns:repeat(auto-fit,minmax(420px,1fr))}
-.grid-3{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;display:flex;flex-direction:column}
-.card.featured{border-color:var(--accent);border-width:1.5px;box-shadow:0 0 0 1px rgba(255,91,58,.15)}
-.card h3{font-family:'Fraunces',serif;font-weight:700;font-size:15px;margin:0 0 4px;letter-spacing:-.01em}
+.grid{display:grid;gap:18px;margin-bottom:18px}
+.grid-2{grid-template-columns:repeat(auto-fit,minmax(440px,1fr))}
+.grid-3{grid-template-columns:repeat(auto-fit,minmax(340px,1fr))}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px;display:flex;flex-direction:column}
+.card.featured{border-color:var(--accent);border-width:1.5px}
+.card h3{font-family:'Fraunces',serif;font-weight:700;font-size:15px;margin:0 0 4px}
 .card .desc{font-size:11.5px;color:var(--muted);margin-bottom:14px}
-.card.tall{min-height:360px}
-.card .canvas-wrap{position:relative;flex:1;min-height:260px}
-.card.tall .canvas-wrap{min-height:300px}
+.card.tall{min-height:380px}
+.card .canvas-wrap{position:relative;flex:1;min-height:280px}
 table.data{width:100%;border-collapse:collapse;font-size:12.5px}
 table.data th,table.data td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
 table.data th{color:var(--muted);font-weight:600;text-transform:uppercase;font-size:10.5px;letter-spacing:.05em;position:sticky;top:0;background:var(--panel);z-index:1}
@@ -81,8 +84,7 @@ table.data tr:hover td{background:var(--panel2)}
 .bar-cell .bar{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,var(--accent),transparent);opacity:.18}
 .bar-cell .lbl{position:relative;padding:8px 10px;display:block}
 .badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10.5px;font-weight:600;font-family:'JetBrains Mono',monospace}
-.badge.good{background:rgba(61,220,151,.15);color:var(--good)}
-.badge.bad{background:rgba(255,91,110,.15);color:var(--bad)}
+.badge.good{background:rgba(61,220,151,.15);color:var(--good)}.badge.bad{background:rgba(255,91,110,.15);color:var(--bad)}
 .status{font-size:11px;color:var(--dim);padding:10px 28px;border-top:1px solid var(--line);display:flex;gap:18px;flex-wrap:wrap;font-family:'JetBrains Mono',monospace}
 .status b{color:var(--ink);font-weight:600}
 .loading{position:fixed;inset:0;background:rgba(13,16,21,.85);display:none;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(4px)}
@@ -93,13 +95,12 @@ table.data tr:hover td{background:var(--panel2)}
 .toast{position:fixed;bottom:24px;right:24px;background:var(--panel);border:1px solid var(--good);color:var(--good);padding:12px 20px;border-radius:8px;z-index:200;animation:slideIn .3s;font-weight:500}
 .toast.err{border-color:var(--bad);color:var(--bad)}
 @keyframes slideIn{from{transform:translateY(20px);opacity:0}to{transform:none;opacity:1}}
-/* AJUSTES */
-.settings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}
+.settings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(400px,1fr));gap:18px}
 .settings-card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px}
 .settings-card h3{font-family:'Fraunces',serif;font-weight:700;font-size:16px;margin:0 0 6px}
 .settings-card .desc{font-size:12px;color:var(--muted);margin-bottom:16px}
 .form-row{display:flex;gap:10px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
-.form-row label{font-size:12px;color:var(--muted);min-width:120px}
+.form-row label{font-size:12px;color:var(--muted);min-width:130px}
 .form-row input,.form-row select{background:var(--panel2);border:1px solid var(--line);color:var(--ink);padding:7px 10px;border-radius:5px;font-family:inherit;font-size:13px;outline:none;flex:1;min-width:100px}
 .form-row input:focus,.form-row select:focus{border-color:var(--accent)}
 .btn{background:var(--accent);border:none;color:#fff;padding:8px 16px;border-radius:5px;cursor:pointer;font-family:inherit;font-size:12.5px;font-weight:600;transition:.15s}
@@ -108,10 +109,8 @@ table.data tr:hover td{background:var(--panel2)}
 .btn.ghost:hover{border-color:var(--accent);color:var(--accent)}
 .btn.good{background:var(--good);color:#0d1015}
 .btn.bad{background:var(--bad)}
-.config-info{background:var(--panel2);border-left:3px solid var(--info);padding:12px 14px;border-radius:4px;margin-bottom:16px;font-size:12px;color:var(--muted)}
-.config-info b{color:var(--ink)}
 .editable-list{max-height:340px;overflow-y:auto;border:1px solid var(--line);border-radius:6px}
-.editable-list .row{display:grid;grid-template-columns:80px 1fr 1.2fr auto;gap:8px;padding:6px 10px;border-bottom:1px solid var(--line);align-items:center;font-size:12px}
+.editable-list .row{display:grid;gap:8px;padding:6px 10px;border-bottom:1px solid var(--line);align-items:center;font-size:12px}
 .editable-list .row:last-child{border-bottom:0}
 .editable-list .row:hover{background:var(--panel2)}
 .editable-list input{background:transparent;border:1px solid transparent;color:var(--ink);padding:4px 6px;border-radius:3px;font-family:inherit;font-size:12px;width:100%}
@@ -122,18 +121,31 @@ table.data tr:hover td{background:var(--panel2)}
 .del-btn:hover{color:var(--bad)}
 .search-box{background:var(--panel2);border:1px solid var(--line);color:var(--ink);padding:8px 12px;border-radius:5px;font-family:inherit;font-size:13px;width:100%;margin-bottom:10px;outline:none}
 .search-box:focus{border-color:var(--accent)}
-@media(max-width:760px){.grid-2,.grid-3{grid-template-columns:1fr}header.top{padding:14px}main{padding:16px}}
+.vis-toggle{display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;color:var(--muted)}
+.vis-toggle input{accent-color:var(--accent)}
+.guide-section{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px;margin-bottom:18px}
+.guide-section h3{font-family:'Fraunces',serif;font-weight:700;font-size:16px;margin:0 0 12px;color:var(--ink)}
+.guide-section h4{color:var(--accent);margin:14px 0 6px;font-size:13px;font-weight:700}
+.guide-section p,.guide-section li{color:var(--muted);font-size:12.5px;line-height:1.7}
+.guide-section code{background:var(--panel2);padding:1px 6px;border-radius:3px;color:var(--accent2);font-family:'JetBrains Mono',monospace;font-size:11.5px}
+.meta-grid{max-height:340px;overflow-y:auto;border:1px solid var(--line);border-radius:6px}
+.meta-grid table{width:100%;border-collapse:collapse;font-size:12px}
+.meta-grid th,.meta-grid td{padding:5px 6px;border-bottom:1px solid var(--line);text-align:center}
+.meta-grid th{background:var(--panel);position:sticky;top:0;color:var(--muted);font-size:10.5px;text-transform:uppercase;font-weight:600}
+.meta-grid input{width:60px;text-align:center;background:var(--panel2);border:1px solid var(--line);color:var(--ink);padding:3px 4px;border-radius:3px;font-size:11.5px;font-family:'JetBrains Mono',monospace}
+.meta-grid input:focus{border-color:var(--accent);outline:none}
+.meta-grid .year-lbl{text-align:left;font-weight:700;color:var(--ink)}
+@media(max-width:760px){.grid-2,.grid-3{grid-template-columns:1fr}header.top{padding:14px}main{padding:16px}.settings-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <div class="app">
 <header class="top">
-  <div class="brand"><h1>Quality<em>·</em>Dash</h1><div class="sub">Indicadores de Defeitos · 2017 — Abr/2026</div></div>
+  <div class="brand"><h1>Quality<em>·</em>Dash</h1><div class="sub">Dashboard de Indicadores de Qualidade</div></div>
   <div class="upload">
-    <label class="fbtn" id="btnDef"><span class="dot"></span><span id="lblDef">Carregar Defeitos</span><input type="file" id="fileDef" accept=".xlsx,.xls"></label>
-    <button class="refresh" id="rfDef" title="Recarregar arquivo de defeitos" disabled>↻</button>
-    <label class="fbtn" id="btnProd"><span class="dot"></span><span id="lblProd">Carregar Produção</span><input type="file" id="fileProd" accept=".xlsx,.xls"></label>
-    <button class="refresh" id="rfProd" title="Recarregar arquivo de produção" disabled>↻</button>
+    <label class="fbtn" id="btnDef"><span class="dot"></span><span id="lblDef">Carregar Defeitos</span><input type="file" id="fileDef" accept=".xlsx,.xls" multiple></label>
+    <label class="fbtn" id="btnProd"><span class="dot"></span><span id="lblProd">Carregar Produção</span><input type="file" id="fileProd" accept=".xlsx,.xls" multiple></label>
+    <button class="refresh" id="rfBtn" title="Recarregar arquivos">↻</button>
   </div>
 </header>
 <nav class="tabs" id="tabs">
@@ -143,22 +155,32 @@ table.data tr:hover td{background:var(--panel2)}
   <div class="tab" data-page="consultants"><span class="num">04</span>Consultores</div>
   <div class="tab" data-page="types"><span class="num">05</span>Tipos &amp; Locais</div>
   <div class="tab" data-page="trends"><span class="num">06</span>Tendências</div>
-  <div class="tab" data-page="settings" style="margin-left:auto"><span class="num">⚙</span>Ajustes</div>
+  <div class="tab" data-page="guide" style="margin-left:auto"><span class="num">📖</span>Guia</div>
+  <div class="tab" data-page="settings"><span class="num">⚙</span>Ajustes</div>
 </nav>
 <div class="filters" id="filters" style="display:none">
-  <div class="filt" style="min-width:260px"><label>Anos (múltipla seleção)</label><div class="multi-years" id="fAnos"></div></div>
+  <div class="filt" style="min-width:280px"><label>Anos (clique para selecionar)</label><div class="multi-years" id="fAnos"></div></div>
   <div class="filt"><label>Mês</label><select id="fMes"><option value="">Todos</option></select></div>
   <div class="filt"><label>Material</label><select id="fMat"><option value="">Todos</option></select></div>
   <div class="filt"><label>Consultor</label><select id="fCons"><option value="">Todos</option></select></div>
   <div class="filt" style="min-width:220px"><label>Cliente</label><select id="fCli"><option value="">Todos</option></select></div>
+  <div class="filt"><label>Indicador</label>
+    <div class="mode-toggle" id="modeToggle">
+      <div class="mode-opt active" data-mode="ppm" title="Partes por milhão">PPM</div>
+      <div class="mode-opt" data-mode="permil" title="Taxa por mil (‰)">‰</div>
+      <div class="mode-opt" data-mode="pct" title="Percentual (%)">%</div>
+      <div class="mode-opt" data-mode="cp100" title="Defeitos por 100 un.">cp100</div>
+    </div>
+  </div>
   <button class="filt-clear" id="btnClear">Limpar filtros</button>
+  <button class="btn-pdf" id="btnPDF" title="Gerar PDF de todas as abas">📄 PDF</button>
 </div>
 <main id="main">
   <div class="empty" id="empty">
-    <h2>Carregue os dois arquivos para começar</h2>
+    <h2>Carregue os arquivos para começar</h2>
     <p>Arquivos esperados: <code>Defeitos</code> e <code>Produção</code> (.xlsx)</p>
-    <p style="margin-top:18px">Os dados ficam <b>somente no seu navegador</b> — nada é enviado a servidores.</p>
-    <p style="margin-top:14px;font-size:12px">Dica: use a aba <b>⚙ Ajustes</b> para importar <code>config.json</code> da pasta compartilhada.</p>
+    <p style="margin-top:14px">Pode carregar <b>múltiplos arquivos</b> — duplicatas são ignoradas automaticamente.</p>
+    <p style="margin-top:14px;font-size:12px">Os dados ficam <b>somente no seu navegador</b>.</p>
   </div>
   <section class="page" id="page-overview"></section>
   <section class="page" id="page-defects"></section>
@@ -166,6 +188,7 @@ table.data tr:hover td{background:var(--panel2)}
   <section class="page" id="page-consultants"></section>
   <section class="page" id="page-types"></section>
   <section class="page" id="page-trends"></section>
+  <section class="page" id="page-guide"></section>
   <section class="page" id="page-settings"></section>
 </main>
 <div class="status" id="status"></div>
@@ -173,393 +196,117 @@ table.data tr:hover td{background:var(--panel2)}
 <div class="loading" id="loading"><div class="box"><div class="spinner"></div><div id="loadMsg">Processando…</div></div></div>
 
 <script>
-/* ============================================================
-   CONFIGURAÇÃO PADRÃO (editável via aba Ajustes)
-   ============================================================ */
-const DEFAULT_CONFIG = {
-  meta_ppm: 1541,
-  meta_periodo: 'ano', // 'ano' | 'mes' | 'dia'
-  decimais_ppm: 0,
-  tipos_defeito: {
-    D001:"PINTURA",D002:"AMASSAMENTO",D003:"ABOLHADURA",D004:"SEM DEFEITO",D005:"EXPOSIÇÃO AO FOGO",
-    D006:"CORROSÃO",D007:"TARA ILEGÍVEL",D008:"FALTA DE TARA",D009:"ERRO DE TARA",D010:"FALTA DE GRAVAÇÕES",
-    D011:"REQUALIFICAÇÃO 15 ANOS",D012:"REQUALIFICAÇÃO 10 ANOS",D013:"VAZAMENTO",D014:"FALTA DE LACRE",
-    D015:"FALTA DE RÓTULO INFORM.",D016:"PESO",D017:"FALTA DE O'RING",D018:"OM'S",D019:"VÁLVULA BAIXA",
-    D020:"RESÍDUOS",D021:"DECANTAÇÃO",D022:"ACESSÓRIO DANIFICADO",D023:"EXCESSO DE AR/PRESSÃO",
-    D024:"O'RING DANIFICADO",D025:"VASILHAME AUTUADO"
-  },
-  locais_defeito: {
-    L001:"VASILHAME",L002:"CORPO",L003:"ALÇA",L004:"BASE",L005:"CALOTA SUPERIOR",L006:"CALOTA INFERIOR",
-    L007:"FLANGE",L008:"SOLDA LONGITUDINAL",L009:"SOLDA CIRCUNFERENCIAL",L010:"FUNDO",L011:"VÁLVULA ROSCA INTERNA",
-    L012:"VÁLVULA ROSCA EXTERNA",L013:"DISP. SEGURANÇA/LIGA",L014:"DISP. SEGUR/ROSCA EXT",L015:"RÓTULO",
-    L016:"NÃO APLICÁVEL",L017:"VÁLVULA DEF. INTERNO",L018:"VÁLVULA SEXTAVADO",L019:"MEDIDOR/DEF. INTERNO",
-    L020:"MEDIDOR/ROSCA EXT",L021:"V. MAX ENCH/DEF INT",L022:"V. MAX ENCH/ROSCA EXT",
-    L023:"V. SERVIÇO/DEF INT",L024:"V. SERVIÇO/ROSCA EXT",L025:"ENGATE MACHO"
-  },
-  materiais: {
-    "200036":{nome:"P-13",vasilhame:"Botijão 13kg"},
-    "200038":{nome:"P-20",vasilhame:"Botijão 20kg"},
-    "200039":{nome:"P-45",vasilhame:"Botijão 45kg"}
-  },
-  clientes: {} // preenchido abaixo
-};
+const CLIENTES_DEFAULT = {"1435": {"nome": "POSTO ROUXINOL LTDA", "consultor": "CLAUDINEI MEDEIROS ANUNCIATO"}, "1819": {"nome": "DISK GAS COXIM EIRELI", "consultor": "FABIANO FONSECA DE CARVALHO"}, "2038": {"nome": "A SILVA DA CONCEICAO CIA LTDA", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "2375": {"nome": "AUTO POSTO PALOMA LTDA EPP", "consultor": "MARCILENE DE ASSIS"}, "2396": {"nome": "AUTO POSTO DOIS IRMAOS EIRELI", "consultor": "MARCILENE DE ASSIS"}, "2459": {"nome": "AUTO POSTO MUTUM LTDA", "consultor": "CLAUDINEI MEDEIROS ANUNCIATO"}, "2520": {"nome": "CALIZA COMERCIO DE GAS LTDA ME", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "2633": {"nome": "AUTO POSTO CASTELO LTDA", "consultor": "CLAUDINEI MEDEIROS ANUNCIATO"}, "2656": {"nome": "CARANDA GAS COMERCIO LTDA", "consultor": "CLAUDINEI MEDEIROS ANUNCIATO"}, "2830": {"nome": "TRIANGULO COMERCIAL DE GAZ LTDA", "consultor": "MARCILENE DE ASSIS"}, "3017": {"nome": "MARCILIO ALVARO BENEDITO CIA LTDA", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "3033": {"nome": "PAI E FILHO COMERCIO DE GAS LTDA EP", "consultor": "CLAUDINEI MEDEIROS ANUNCIATO"}, "3157": {"nome": "POSTO CENTRAL MSS LTDA", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "3290": {"nome": "VITORIA COMERCIO E TRANSPORTES LTDA", "consultor": "PATRICIA ESPINDOLA FERREIRA"}, "3653": {"nome": "CLAUDIR LORENZATTO", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "3824": {"nome": "SEARA", "consultor": "THIAGO DA SILVA ONARI"}, "4259": {"nome": "ENAN COMERCIO DE GAS LTDA EPP", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "4296": {"nome": "YOUSSIF AMIM YOUSSIF EPP", "consultor": "CLAUDINEI MEDEIROS ANUNCIATO"}, "4336": {"nome": "MERCADO MISTER JUNIOR LTDA", "consultor": "CLAUDINEI MEDEIROS ANUNCIATO"}, "4737": {"nome": "UNIGAS COMERCIO DE COMBUSTIVEIS LTD", "consultor": "MARCILENE DE ASSIS"}, "4826": {"nome": "MAURO SOARES DA SILVA ME", "consultor": "PATRICIA ESPINDOLA FERREIRA"}, "5061": {"nome": "ALBA LAMEN LTDA ME", "consultor": "CLAUDINEI MEDEIROS ANUNCIATO"}, "5159": {"nome": "ANAIR MOURA DOS SANTOS EPP", "consultor": "MARCILENE DE ASSIS"}, "5947": {"nome": "ACIOLY BARBOSA COMERCIO DE GAS", "consultor": "MARCILENE DE ASSIS"}, "5970": {"nome": "DISTRIBUIDORA DE GAS PEDRA BONITA", "consultor": "MARCILENE DE ASSIS"}, "5996": {"nome": "MANSUR LOPES DUARTE EPP", "consultor": "MARCILENE DE ASSIS"}, "6265": {"nome": "COMERCIO DE GAS PRIMAVERA LTDA EPP", "consultor": "FABIANO FONSECA DE CARVALHO"}, "6582": {"nome": "NILDO LEAO SANTANA ME", "consultor": "MARCILENE DE ASSIS"}, "6796": {"nome": "DISTRIBUIDORA SOUZA SILVA LTDA ME", "consultor": "CLAUDINEI MEDEIROS ANUNCIATO"}, "6877": {"nome": "GULART E CIA LTDA", "consultor": "CLAUDINEI MEDEIROS ANUNCIATO"}, "7117": {"nome": "SANDRO ANTONIO MACIEL ME", "consultor": "MARCILENE DE ASSIS"}, "7679": {"nome": "POSTO F5 LTDA", "consultor": "PATRICIA ESPINDOLA FERREIRA"}, "7864": {"nome": "KENY RAMOS FERREIRA", "consultor": "PATRICIA ESPINDOLA FERREIRA"}, "7879": {"nome": "AUTO POSTO ENTRE RIOS CIDADE LTDA", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "7964": {"nome": "HERON ANTUNES DE MORAES ME", "consultor": "PATRICIA ESPINDOLA FERREIRA"}, "8123": {"nome": "DOMINGOS MASIAS ME", "consultor": "PATRICIA ESPINDOLA FERREIRA"}, "8266": {"nome": "V L SANABRIA ME", "consultor": "MARCILENE DE ASSIS"}, "8330": {"nome": "GILMAR DA SILVA ME", "consultor": "PATRICIA ESPINDOLA FERREIRA"}, "8336": {"nome": "ALESSANDRO BASTOS DOS SANTOS ME", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "8563": {"nome": "RIO VERDE GAS COMERCIO LTDA ME", "consultor": "FABIANO FONSECA DE CARVALHO"}, "8648": {"nome": "MARCOS APARECIDO MARQUES DA SILVA M", "consultor": "PATRICIA ESPINDOLA FERREIRA"}, "9235": {"nome": "SONORA GAS LTDA EPP", "consultor": "FABIANO FONSECA DE CARVALHO"}, "9236": {"nome": "COMERCIAL DE GAS PEDRO GOMES LTDA E", "consultor": "FABIANO FONSECA DE CARVALHO"}, "9463": {"nome": "PLANALTO CONVENIENCIA LTDA ME", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "9478": {"nome": "VALDEMAR CORDEIRO DE OLIVEIRA", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "10008": {"nome": "L H FENNER COMBUSTIVEIS ME", "consultor": "CLAUDINEI MEDEIROS ANUNCIATO"}, "10058": {"nome": "TEREZINHA SILVA SOUSA", "consultor": "MARCILENE DE ASSIS"}, "10422": {"nome": "JEAN ANDREVE PITTON EIRELI", "consultor": "MARCILENE DE ASSIS"}, "10879": {"nome": "PARANA GAS COMERCIO E REPRESENTACAO", "consultor": "CLAUDINEI MEDEIROS ANUNCIATO"}, "10927": {"nome": "VALMIRO PEREIRA DE SOUSA ME", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "10940": {"nome": "JOSE ANTONIO MOREIRA QUEIROZ", "consultor": "CLAUDINEI MEDEIROS ANUNCIATO"}, "11928": {"nome": "RICARDO MEDEIROS DO NASCIMENTO", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "11971": {"nome": "KEILA PALMA ME", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "12309": {"nome": "C C F GONCALVES EIRELI", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "12397": {"nome": "CENTER GAS COMERCIO VAREJISTA DE", "consultor": "PATRICIA ESPINDOLA FERREIRA"}, "12400": {"nome": "SEBASTIAO LUIZ DE CARVALHO FILHO ME", "consultor": "PATRICIA ESPINDOLA FERREIRA"}, "12994": {"nome": "JUSTINO COMERCIO DE ALIMENTOS LTDA", "consultor": "MARCILENE DE ASSIS"}, "13351": {"nome": "JOSE DUTRA DA ROCHA ME", "consultor": "CLAUDINEI MEDEIROS ANUNCIATO"}, "13486": {"nome": "MISTER JUNIOR GAS LIMITADA ME", "consultor": "CLAUDINEI MEDEIROS ANUNCIATO"}, "13630": {"nome": "FAGUNDES SOUZA LTDA ME", "consultor": "PATRICIA ESPINDOLA FERREIRA"}, "13633": {"nome": "POSTO RUI BARBOSA LTDA", "consultor": "CLAUDINEI MEDEIROS ANUNCIATO"}, "13661": {"nome": "EDER LUIS CORREA DA ROSA", "consultor": "PATRICIA ESPINDOLA FERREIRA"}, "13836": {"nome": "MI GAS COMERCIAL E TRANSPORTADORA", "consultor": "PATRICIA ESPINDOLA FERREIRA"}, "13981": {"nome": "SILVANO RIBEIRO DE SOUZA ME", "consultor": "CLAUDINEI MEDEIROS ANUNCIATO"}, "14308": {"nome": "RENATO FERREIRA DOURADO ME", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "14701": {"nome": "FALEIROS CIA LTDA", "consultor": "CLAUDINEI MEDEIROS ANUNCIATO"}, "15063": {"nome": "PRISCILA LECHNER SOARES CIA LTDA", "consultor": "MARCILENE DE ASSIS"}, "15546": {"nome": "HUGNEY SANDIM MOTTI ME", "consultor": "PATRICIA ESPINDOLA FERREIRA"}, "15713": {"nome": "BORBA BORBA LTDA ME", "consultor": "FABIANO FONSECA DE CARVALHO"}, "15748": {"nome": "RONEI RODRIGUES DE SOUZA ME", "consultor": "MARCILENE DE ASSIS"}, "16372": {"nome": "TORRES SANTOS LTDA ME", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "16568": {"nome": "AUTO POSTO PE DE CEDRO LTDA", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "16716": {"nome": "LR PETROLEO LTDA", "consultor": "CLAUDINEI MEDEIROS ANUNCIATO"}, "16826": {"nome": "RIBEIRO DE MENDONCA BASTON CIA LTD", "consultor": "CLAUDINEI MEDEIROS ANUNCIATO"}, "17103": {"nome": "OVIDIO DARCI MULLER EPP", "consultor": "FABIANO FONSECA DE CARVALHO"}, "17434": {"nome": "J S DA ROSA LAGO ME", "consultor": "MARCILENE DE ASSIS"}, "17938": {"nome": "MUNDIAL COMERCIO DE GAS E CONVENIEN", "consultor": "MARCILENE DE ASSIS"}, "17972": {"nome": "FRANCISCA APARECIDA ALMADA FEITOSA", "consultor": "MARCILENE DE ASSIS"}, "18090": {"nome": "MARCOS APARECIDO RIBEIRO", "consultor": "CLAUDINEI MEDEIROS ANUNCIATO"}, "18195": {"nome": "ELIEDER TORAL ME", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "18411": {"nome": "ARAL GAS COMERCIO DE GAS LTDA ME", "consultor": "MARCILENE DE ASSIS"}, "18852": {"nome": "JOSEMAR LOURENCO DA SILVA ME", "consultor": "PATRICIA ESPINDOLA FERREIRA"}, "19292": {"nome": "FERNANDO JACINTO ME", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "19587": {"nome": "MARIA DE LOURDES TRELHA EIRELI", "consultor": "MARCILENE DE ASSIS"}, "19799": {"nome": "EZEQUIEL DA S MACHADO", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "20367": {"nome": "ALEXSANDRO MARCOS DE FARIA ME", "consultor": "CLAUDINEI MEDEIROS ANUNCIATO"}, "20686": {"nome": "PAULO CESAR NEULAND GOTTARDI EIRELI", "consultor": "MARCILENE DE ASSIS"}, "20799": {"nome": "MS DISTRIBUIDORA DE GAS LTDA ME", "consultor": "MARCILENE DE ASSIS"}, "20866": {"nome": "GABRIEL MENEZES", "consultor": "CLAUDINEI MEDEIROS ANUNCIATO"}, "21416": {"nome": "KRAIEVSKI COMERCIO ALIMENTOS E", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "21648": {"nome": "ENIO MARTINS DE BORBA ME", "consultor": "FABIANO FONSECA DE CARVALHO"}, "21876": {"nome": "PANTANEIRA REVENDEDORA DE GAS E", "consultor": "MARCILENE DE ASSIS"}, "21955": {"nome": "COXIM GAS COMERCIO LTDA EPP", "consultor": "FABIANO FONSECA DE CARVALHO"}, "22055": {"nome": "AUTO POSTO TREVIZAN LTDA", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "22057": {"nome": "SUPERMERCADOS JULIFRAN LTDA", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "24750": {"nome": "APARECIDA PAREDES AMARILHA DE MEDEI", "consultor": "MARCILENE DE ASSIS"}, "29692": {"nome": "RB COMERCIO DE GAS E AGUA LTDA", "consultor": "CLAUDINEI MEDEIROS ANUNCIATO"}, "30693": {"nome": "RM COMERCIO DE GAS LTDA ME", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "33239": {"nome": "SUPO GAS LTDA", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "35365": {"nome": "OSVALDO BEZERRA FAGUNDES ME", "consultor": "PATRICIA ESPINDOLA FERREIRA"}, "35764": {"nome": "COMERCIAL DE GAS ALCINOPOLIS LTDA M", "consultor": "FABIANO FONSECA DE CARVALHO"}, "35786": {"nome": "QUADROS COMERCIO DE GAS LTDA", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "35897": {"nome": "ENC COMERCIO DE GAS LTDA", "consultor": "CLAUDINEI MEDEIROS ANUNCIATO"}, "36906": {"nome": "PONTO CHIC CONVENIENCIAS EIRELI", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "39570": {"nome": "M M DE MATTOS EIRELI ME", "consultor": "CLAUDINEI MEDEIROS ANUNCIATO"}, "39921": {"nome": "JANILSON MENDES DIAS ME", "consultor": "CLAUDINEI MEDEIROS ANUNCIATO"}, "41204": {"nome": "CYRENO COMERCIO DE GAS E AGUA", "consultor": "CLAUDINEI MEDEIROS ANUNCIATO"}, "41665": {"nome": "COPAIVA COMERCIO DE GAS LTDA", "consultor": "MARCILENE DE ASSIS"}, "41925": {"nome": "PRISCILA LECHNER SOARES CIA LTDA", "consultor": "MARCILENE DE ASSIS"}, "41928": {"nome": "FORTE GAS LTDA", "consultor": "CLAUDINEI MEDEIROS ANUNCIATO"}, "44519": {"nome": "REGINALDO DOS SANTOS LOPES", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "44577": {"nome": "POZZA COMERCIO DE GAS LTDA", "consultor": "MARCILENE DE ASSIS"}, "44870": {"nome": "UEMURA SANCHES LTDA", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "44884": {"nome": "S ALVES TERRA", "consultor": "PATRICIA ESPINDOLA FERREIRA"}, "45110": {"nome": "SPEEDGAZ COMERCIO VAREJISTA DE GAS", "consultor": "CLAUDINEI MEDEIROS ANUNCIATO"}, "45142": {"nome": "ANIBAL AGUILERA VARGAS", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "45145": {"nome": "JUNDIAI COMERCIO DE GAS E AGUA LTDA", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "45147": {"nome": "S R R GOMES", "consultor": "MARCILENE DE ASSIS"}, "45793": {"nome": "VIEIRA E VIEIRA LTDA", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "46349": {"nome": "KERO GAS COMERCIO VAREJISTA DE GAS", "consultor": "PATRICIA ESPINDOLA FERREIRA"}, "46945": {"nome": "QUELIN REGINA TOMIATTI MOREIRA LTDA", "consultor": "CLAUDINEI MEDEIROS ANUNCIATO"}, "47624": {"nome": "RUBENS ROBERTO MACENA DA SILVA", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "48785": {"nome": "A R DOS SANTOS FILHO", "consultor": "MARCILENE DE ASSIS"}, "48790": {"nome": "LIGEIRINHO GAS LTDA", "consultor": "CLAUDINEI MEDEIROS ANUNCIATO"}, "50160": {"nome": "GAS CHAMA KI TEM LTDA", "consultor": "MARCILENE DE ASSIS"}, "50175": {"nome": "MANOEL CARDOZO NUNES", "consultor": "MARCILENE DE ASSIS"}, "50306": {"nome": "E ALVES AVELAR", "consultor": "MARCILENE DE ASSIS"}, "50709": {"nome": "VICENTE COMERCIO DE GAS LTDA", "consultor": "CLAUDINEI MEDEIROS ANUNCIATO"}, "52886": {"nome": "AUTO POSTO ANIELLI LTDA", "consultor": "MARCILENE DE ASSIS"}, "53371": {"nome": "AUTO POSTO IMACULADA CONCEICAO LTDA", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "53727": {"nome": "AUTO POSTO SAN FRANCISCO LTDA", "consultor": "MARCILENE DE ASSIS"}, "54097": {"nome": "RURAL SHOPPING CAMPO GRANDE", "consultor": "CALL CENTER"}, "54172": {"nome": "TATYANE COMERCIO DE GAS LTDA", "consultor": "CLAUDINEI MEDEIROS ANUNCIATO"}, "54344": {"nome": "AUTO POSTO GUAICURUS LTDA", "consultor": "MARCILENE DE ASSIS"}, "55521": {"nome": "SANTOS E TORRES LTDA", "consultor": "MARCILENE DE ASSIS"}, "55540": {"nome": "OSMAR DE FREITAS ALEIXO LTDA", "consultor": "MARCILENE DE ASSIS"}, "56435": {"nome": "SANDER DORNELES PEREIRA JUNIOR", "consultor": "MARCILENE DE ASSIS"}, "56941": {"nome": "JOAO GABRIEL FIGUEIREDO LTDA", "consultor": "PATRICIA ESPINDOLA FERREIRA"}, "57427": {"nome": "ROGERIO GAS E AGUA EIRELI", "consultor": "PATRICIA ESPINDOLA FERREIRA"}, "58383": {"nome": "PORTO CONVENIENCIA COMERCIO DE", "consultor": "MARCILENE DE ASSIS"}, "58623": {"nome": "EDUARDO DE AZEVEDO BRAGA", "consultor": "PATRICIA ESPINDOLA FERREIRA"}, "58762": {"nome": "EVERSON ALESSANDRO MOREIRA", "consultor": "PATRICIA ESPINDOLA FERREIRA"}, "58849": {"nome": "VALDOMIRO MONTEIRO", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "59028": {"nome": "SOCOLOSKI SUPERMERCADO LTDA", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "59038": {"nome": "RIBAS RIBEIRO VENDA DE GAS LTDA", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "59072": {"nome": "NOROESTE COMERCIO DE GAS LTDA", "consultor": "CLAUDINEI MEDEIROS ANUNCIATO"}, "59644": {"nome": "ADAO ALVES DE CAMARGO", "consultor": "FABIANO FONSECA DE CARVALHO"}, "59652": {"nome": "MARIA APARECIDA GUEDES LEMES CIA L", "consultor": "CLAUDINEI MEDEIROS ANUNCIATO"}, "59654": {"nome": "M G DE MATOS", "consultor": "FABIANO FONSECA DE CARVALHO"}, "59660": {"nome": "ZYZZ DEPOSITO DE GAS E AGUA LTDA", "consultor": "FABIANO FONSECA DE CARVALHO"}, "59720": {"nome": "SILVANO BELEM DE FREITAS", "consultor": "FABIANO FONSECA DE CARVALHO"}, "59734": {"nome": "ZOROASTRO RIBEIRO RESENDE", "consultor": "FABIANO FONSECA DE CARVALHO"}, "59737": {"nome": "CENTER COMERCIO DE GAS E CONVENIENC", "consultor": "FABIANO FONSECA DE CARVALHO"}, "59767": {"nome": "ROSINEI BRAGA DO NASCIMENTO EIRELI", "consultor": "FABIANO FONSECA DE CARVALHO"}, "59778": {"nome": "ANTONIO ALTAIR COSTA", "consultor": "FABIANO FONSECA DE CARVALHO"}, "59779": {"nome": "J R DA SILVA", "consultor": "FABIANO FONSECA DE CARVALHO"}, "59789": {"nome": "ANTONIO ALTAIR COSTA", "consultor": "FABIANO FONSECA DE CARVALHO"}, "59815": {"nome": "M P FILHO COMERCIO DE GAS EIRELI", "consultor": "FABIANO FONSECA DE CARVALHO"}, "59816": {"nome": "MATSUNAGA MARQUES CIA LTDA", "consultor": "FABIANO FONSECA DE CARVALHO"}, "59820": {"nome": "BERTOZZI BERTOZZI COMERCIO DE COMB", "consultor": "PATRICIA ESPINDOLA FERREIRA"}, "59828": {"nome": "C CASTRO PAES EIRELI", "consultor": "FABIANO FONSECA DE CARVALHO"}, "59829": {"nome": "MARILEIDE DE OLIVEIRA TAVEIRA BRUM", "consultor": "CLAUDINEI MEDEIROS ANUNCIATO"}, "59830": {"nome": "S GARCIA DE MATOS EIRELI", "consultor": "FABIANO FONSECA DE CARVALHO"}, "59986": {"nome": "G GONCALVES DA SILVA", "consultor": "FABIANO FONSECA DE CARVALHO"}, "60641": {"nome": "M G COMERCIO VAREJISTA DE GAS LTDA", "consultor": "FABIANO FONSECA DE CARVALHO"}, "60651": {"nome": "COMERCIO DE GAS PRIMAVERA LTDA", "consultor": "FABIANO FONSECA DE CARVALHO"}, "61901": {"nome": "CLAUDIO FERNANDO PAREDES FARINHA", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "62206": {"nome": "ISIDORO TEIXEIRA BATISTA", "consultor": "FABIANO FONSECA DE CARVALHO"}, "62285": {"nome": "DEPOSITO DE GAS PRECO CERTO", "consultor": "FABIANO FONSECA DE CARVALHO"}, "62394": {"nome": "ANA PAULA DE SOUZA SANTOS", "consultor": "FABIANO FONSECA DE CARVALHO"}, "62451": {"nome": "DEBORAH BRITO KOSLOSKI CAVALCANTE", "consultor": "CLAUDINEI MEDEIROS ANUNCIATO"}, "62813": {"nome": "RENATO FERREIRA DOURADO", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "111394": {"nome": "COMERCIO DE GAS PRIMAVERA LTDA", "consultor": "FABIANO FONSECA DE CARVALHO"}, "116105": {"nome": "EDIVANIA SOUSA NOGUEIRA", "consultor": "PATRICIA ESPINDOLA FERREIRA"}, "117215": {"nome": "AUTO POSTO SAN CRISTOVAO LTDA", "consultor": "MARCILENE DE ASSIS"}, "117459": {"nome": "ANDERSON GAS E AUTO SOCORRO LTDA", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "117611": {"nome": "BORGES COMERCIO E SERVICOS LTDA", "consultor": "MARCILENE DE ASSIS"}, "117810": {"nome": "ALTAS HORAS GAS E CONVENIENCIA LTDA", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "117828": {"nome": "SILVA GAS E AGUA LTDA", "consultor": "CLAUDINEI MEDEIROS ANUNCIATO"}, "118106": {"nome": "MARIO AUGUSTO CAMARGO", "consultor": "PATRICIA ESPINDOLA FERREIRA"}, "118769": {"nome": "REDE CHAMA GAS COMERCIO DE GAS LTDA", "consultor": "FABIANO FONSECA DE CARVALHO"}, "118841": {"nome": "IMPERIO DO GAS LTDA", "consultor": "PATRICIA ESPINDOLA FERREIRA"}, "119028": {"nome": "GAS SANTA ANA LTDA", "consultor": "CLAUDINEI MEDEIROS ANUNCIATO"}, "119220": {"nome": "EUZEBIO NIHUES", "consultor": "MARCILENE DE ASSIS"}, "119511": {"nome": "POSTO PENA BRANCA LTDA", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "119514": {"nome": "S PEREIRA GAS", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "119542": {"nome": "AUTO POSTO LOPES RODRIGUES LTDA", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "119748": {"nome": "BRUNO HENRIQUE SCHREINER LTDA", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "119760": {"nome": "ILDEVI FURTADO DE SOUZA", "consultor": "CLAUDINEI MEDEIROS ANUNCIATO"}, "119966": {"nome": "REDE CHAMA GAS COMERCIO DE GAS LTDA", "consultor": "FABIANO FONSECA DE CARVALHO"}, "120167": {"nome": "ANA PAULA DA SILVA SOUZA", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "120398": {"nome": "RONEI RODRIGUES DE SOUZA", "consultor": "MARCILENE DE ASSIS"}, "120399": {"nome": "SUPRILAR GAS E AGUA LTDA", "consultor": "CLAUDINEI MEDEIROS ANUNCIATO"}, "121651": {"nome": "QR GAS COMERCIO E TRANSPORTE LTDA", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "121675": {"nome": "FABIANA SILVA DE ARAUJO COMERCIO DE", "consultor": "CLAUDINEI MEDEIROS ANUNCIATO"}, "122301": {"nome": "A J COMERCIO DE GAS LTDA", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "122625": {"nome": "ALTAS HORAS GAS & CONVENIENCIA LTDA", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "123509": {"nome": "GAS DOIS IRMAOS LTDA", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "124083": {"nome": "NOVA GAS LTDA", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "124674": {"nome": "ALFREDO GUSTAVO VARGAS", "consultor": "MARCILENE DE ASSIS"}, "125083": {"nome": "COMERCIAL DE ALIMENTOS BETANIA LTDA", "consultor": "CLAUDINEI MEDEIROS ANUNCIATO"}, "125693": {"nome": "S DO NASCIMENTO PARRA LTDA", "consultor": "MARCILENE DE ASSIS"}, "125980": {"nome": "COMERCIAL SOARES DISTRIBUIDORA DE", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "126346": {"nome": "ADAIR PARREIRA DE PAULA", "consultor": "PATRICIA ESPINDOLA FERREIRA"}, "126361": {"nome": "KS SUPERMERCADOS LTDA", "consultor": "PATRICIA ESPINDOLA FERREIRA"}, "126435": {"nome": "A E A REPRESENTACOES COMERCIAIS E", "consultor": "CLAUDINEI MEDEIROS ANUNCIATO"}, "126499": {"nome": "HEITOR FERNANDO ANDRADE", "consultor": "CLAUDINEI MEDEIROS ANUNCIATO"}, "126510": {"nome": "COMERCIO DE GAS DANTAS LTDA", "consultor": "PATRICIA ESPINDOLA FERREIRA"}, "126594": {"nome": "MARCOS ANTONIO MOURA RABALDELLI", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "126722": {"nome": "AUTO POSTO SANTA CLARA LTDA", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "126833": {"nome": "LAURA S G DA SILVA LTDA", "consultor": "FABIANO FONSECA DE CARVALHO"}, "126969": {"nome": "LUCAS ORTIZ PEREIRA", "consultor": "PATRICIA ESPINDOLA FERREIRA"}, "126971": {"nome": "CONVENIENCIA AROEIRA LTDA", "consultor": "MARCILENE DE ASSIS"}, "127012": {"nome": "REAL GAS E AGUA LTDA", "consultor": "FABIANO FONSECA DE CARVALHO"}, "127474": {"nome": "WL GAS E AGUA LTDA", "consultor": "PATRICIA ESPINDOLA FERREIRA"}, "127683": {"nome": "NOVA GAS LTDA", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "128238": {"nome": "COMERCIAL DUAS NACOES LTDA", "consultor": "NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA"}, "128356": {"nome": "ADRIANO VIEIRA SOARES", "consultor": "CLAUDINEI MEDEIROS ANUNCIATO"}, "128490": {"nome": "VRC DISTRIBUIDORA DE GAS E BEBIDAS LTDA", "consultor": "CLAUDINEI MEDEIROS ANUNCIATO"}, "128566": {"nome": "UNIVERSO COMERCIO E DISTRIBUIDORA D", "consultor": "FABIANO FONSECA DE CARVALHO"}, "128952": {"nome": "DISTRIBUIDORA DE GAS F5 LTDA", "consultor": "PATRICIA ESPINDOLA FERREIRA"}, "129361": {"nome": "S THOMAZ DOS SANTOS", "consultor": "FABIANO FONSECA DE CARVALHO"}, "129557": {"nome": "JOICIELI IFRAN SORRILHA", "consultor": "MARCILENE DE ASSIS"}, "130291": {"nome": "GAS DOIS AMIGOS LTDA", "consultor": "CLAUDINEI MEDEIROS ANUNCIATO"}, "130520": {"nome": "IMPACTO COMERCIO DE GAS LTDA", "consultor": "CLAUDINEI MEDEIROS ANUNCIATO"}, "130720": {"nome": "PAIVA E PAIVA LTDA", "consultor": "MARCILENE DE ASSIS"}};
 
-const CLIENTES_DEFAULT_RAW=`1435|POSTO ROUXINOL LTDA|CLAUDINEI MEDEIROS ANUNCIATO
-1819|DISK GAS COXIM EIRELI|FABIANO FONSECA DE CARVALHO
-2038|A SILVA DA CONCEICAO CIA LTDA|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-2375|AUTO POSTO PALOMA LTDA EPP|MARCILENE DE ASSIS
-2396|AUTO POSTO DOIS IRMAOS EIRELI|MARCILENE DE ASSIS
-2459|AUTO POSTO MUTUM LTDA|CLAUDINEI MEDEIROS ANUNCIATO
-2520|CALIZA COMERCIO DE GAS LTDA ME|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-2633|AUTO POSTO CASTELO LTDA|CLAUDINEI MEDEIROS ANUNCIATO
-2656|CARANDA GAS COMERCIO LTDA|CLAUDINEI MEDEIROS ANUNCIATO
-2830|TRIANGULO COMERCIAL DE GAZ LTDA|MARCILENE DE ASSIS
-3017|MARCILIO ALVARO BENEDITO CIA LTDA|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-3033|PAI E FILHO COMERCIO DE GAS LTDA EP|CLAUDINEI MEDEIROS ANUNCIATO
-3157|POSTO CENTRAL MSS LTDA|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-3290|VITORIA COMERCIO E TRANSPORTES LTDA|PATRICIA ESPINDOLA FERREIRA
-3653|CLAUDIR LORENZATTO|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-3824|SEARA|THIAGO DA SILVA ONARI
-4259|ENAN COMERCIO DE GAS LTDA EPP|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-4296|YOUSSIF AMIM YOUSSIF EPP|CLAUDINEI MEDEIROS ANUNCIATO
-4336|MERCADO MISTER JUNIOR LTDA|CLAUDINEI MEDEIROS ANUNCIATO
-4737|UNIGAS COMERCIO DE COMBUSTIVEIS LTD|MARCILENE DE ASSIS
-4826|MAURO SOARES DA SILVA ME|PATRICIA ESPINDOLA FERREIRA
-5061|ALBA LAMEN LTDA ME|CLAUDINEI MEDEIROS ANUNCIATO
-5159|ANAIR MOURA DOS SANTOS EPP|MARCILENE DE ASSIS
-5947|ACIOLY BARBOSA COMERCIO DE GAS|MARCILENE DE ASSIS
-5970|DISTRIBUIDORA DE GAS PEDRA BONITA|MARCILENE DE ASSIS
-5996|MANSUR LOPES DUARTE EPP|MARCILENE DE ASSIS
-6265|COMERCIO DE GAS PRIMAVERA LTDA EPP|FABIANO FONSECA DE CARVALHO
-6582|NILDO LEAO SANTANA ME|MARCILENE DE ASSIS
-6796|DISTRIBUIDORA SOUZA SILVA LTDA ME|CLAUDINEI MEDEIROS ANUNCIATO
-6877|GULART E CIA LTDA|CLAUDINEI MEDEIROS ANUNCIATO
-7117|SANDRO ANTONIO MACIEL ME|MARCILENE DE ASSIS
-7679|POSTO F5 LTDA|PATRICIA ESPINDOLA FERREIRA
-7864|KENY RAMOS FERREIRA|PATRICIA ESPINDOLA FERREIRA
-7879|AUTO POSTO ENTRE RIOS CIDADE LTDA|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-7964|HERON ANTUNES DE MORAES ME|PATRICIA ESPINDOLA FERREIRA
-8123|DOMINGOS MASIAS ME|PATRICIA ESPINDOLA FERREIRA
-8266|V L SANABRIA ME|MARCILENE DE ASSIS
-8330|GILMAR DA SILVA ME|PATRICIA ESPINDOLA FERREIRA
-8336|ALESSANDRO BASTOS DOS SANTOS ME|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-8563|RIO VERDE GAS COMERCIO LTDA ME|FABIANO FONSECA DE CARVALHO
-8648|MARCOS APARECIDO MARQUES DA SILVA M|PATRICIA ESPINDOLA FERREIRA
-9235|SONORA GAS LTDA EPP|FABIANO FONSECA DE CARVALHO
-9236|COMERCIAL DE GAS PEDRO GOMES LTDA E|FABIANO FONSECA DE CARVALHO
-9463|PLANALTO CONVENIENCIA LTDA ME|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-9478|VALDEMAR CORDEIRO DE OLIVEIRA|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-10008|L H FENNER COMBUSTIVEIS ME|CLAUDINEI MEDEIROS ANUNCIATO
-10058|TEREZINHA SILVA SOUSA|MARCILENE DE ASSIS
-10422|JEAN ANDREVE PITTON EIRELI|MARCILENE DE ASSIS
-10879|PARANA GAS COMERCIO E REPRESENTACAO|CLAUDINEI MEDEIROS ANUNCIATO
-10927|VALMIRO PEREIRA DE SOUSA ME|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-10940|JOSE ANTONIO MOREIRA QUEIROZ|CLAUDINEI MEDEIROS ANUNCIATO
-11928|RICARDO MEDEIROS DO NASCIMENTO|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-11971|KEILA PALMA ME|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-12309|C C F GONCALVES EIRELI|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-12397|CENTER GAS COMERCIO VAREJISTA DE|PATRICIA ESPINDOLA FERREIRA
-12400|SEBASTIAO LUIZ DE CARVALHO FILHO ME|PATRICIA ESPINDOLA FERREIRA
-12994|JUSTINO COMERCIO DE ALIMENTOS LTDA|MARCILENE DE ASSIS
-13351|JOSE DUTRA DA ROCHA ME|CLAUDINEI MEDEIROS ANUNCIATO
-13486|MISTER JUNIOR GAS LIMITADA ME|CLAUDINEI MEDEIROS ANUNCIATO
-13630|FAGUNDES SOUZA LTDA ME|PATRICIA ESPINDOLA FERREIRA
-13633|POSTO RUI BARBOSA LTDA|CLAUDINEI MEDEIROS ANUNCIATO
-13661|EDER LUIS CORREA DA ROSA|PATRICIA ESPINDOLA FERREIRA
-13836|MI GAS COMERCIAL E TRANSPORTADORA|PATRICIA ESPINDOLA FERREIRA
-13981|SILVANO RIBEIRO DE SOUZA ME|CLAUDINEI MEDEIROS ANUNCIATO
-14308|RENATO FERREIRA DOURADO ME|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-14701|FALEIROS CIA LTDA|CLAUDINEI MEDEIROS ANUNCIATO
-15063|PRISCILA LECHNER SOARES CIA LTDA|MARCILENE DE ASSIS
-15546|HUGNEY SANDIM MOTTI ME|PATRICIA ESPINDOLA FERREIRA
-15713|BORBA BORBA LTDA ME|FABIANO FONSECA DE CARVALHO
-15748|RONEI RODRIGUES DE SOUZA ME|MARCILENE DE ASSIS
-16372|TORRES SANTOS LTDA ME|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-16568|AUTO POSTO PE DE CEDRO LTDA|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-16716|LR PETROLEO LTDA|CLAUDINEI MEDEIROS ANUNCIATO
-16826|RIBEIRO DE MENDONCA BASTON CIA LTD|CLAUDINEI MEDEIROS ANUNCIATO
-17103|OVIDIO DARCI MULLER EPP|FABIANO FONSECA DE CARVALHO
-17434|J S DA ROSA LAGO ME|MARCILENE DE ASSIS
-17938|MUNDIAL COMERCIO DE GAS E CONVENIEN|MARCILENE DE ASSIS
-17972|FRANCISCA APARECIDA ALMADA FEITOSA|MARCILENE DE ASSIS
-18090|MARCOS APARECIDO RIBEIRO|CLAUDINEI MEDEIROS ANUNCIATO
-18195|ELIEDER TORAL ME|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-18411|ARAL GAS COMERCIO DE GAS LTDA ME|MARCILENE DE ASSIS
-18852|JOSEMAR LOURENCO DA SILVA ME|PATRICIA ESPINDOLA FERREIRA
-19292|FERNANDO JACINTO ME|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-19587|MARIA DE LOURDES TRELHA EIRELI|MARCILENE DE ASSIS
-19799|EZEQUIEL DA S MACHADO|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-20367|ALEXSANDRO MARCOS DE FARIA ME|CLAUDINEI MEDEIROS ANUNCIATO
-20686|PAULO CESAR NEULAND GOTTARDI EIRELI|MARCILENE DE ASSIS
-20799|MS DISTRIBUIDORA DE GAS LTDA ME|MARCILENE DE ASSIS
-20866|GABRIEL MENEZES|CLAUDINEI MEDEIROS ANUNCIATO
-21416|KRAIEVSKI COMERCIO ALIMENTOS E|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-21648|ENIO MARTINS DE BORBA ME|FABIANO FONSECA DE CARVALHO
-21876|PANTANEIRA REVENDEDORA DE GAS E|MARCILENE DE ASSIS
-21955|COXIM GAS COMERCIO LTDA EPP|FABIANO FONSECA DE CARVALHO
-22055|AUTO POSTO TREVIZAN LTDA|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-22057|SUPERMERCADOS JULIFRAN LTDA|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-24750|APARECIDA PAREDES AMARILHA DE MEDEI|MARCILENE DE ASSIS
-29692|RB COMERCIO DE GAS E AGUA LTDA|CLAUDINEI MEDEIROS ANUNCIATO
-30693|RM COMERCIO DE GAS LTDA ME|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-33239|SUPO GAS LTDA|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-35365|OSVALDO BEZERRA FAGUNDES ME|PATRICIA ESPINDOLA FERREIRA
-35764|COMERCIAL DE GAS ALCINOPOLIS LTDA M|FABIANO FONSECA DE CARVALHO
-35786|QUADROS COMERCIO DE GAS LTDA|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-35897|ENC COMERCIO DE GAS LTDA|CLAUDINEI MEDEIROS ANUNCIATO
-36906|PONTO CHIC CONVENIENCIAS EIRELI|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-39570|M M DE MATTOS EIRELI ME|CLAUDINEI MEDEIROS ANUNCIATO
-39921|JANILSON MENDES DIAS ME|CLAUDINEI MEDEIROS ANUNCIATO
-41204|CYRENO COMERCIO DE GAS E AGUA|CLAUDINEI MEDEIROS ANUNCIATO
-41665|COPAIVA COMERCIO DE GAS LTDA|MARCILENE DE ASSIS
-41925|PRISCILA LECHNER SOARES CIA LTDA|MARCILENE DE ASSIS
-41928|FORTE GAS LTDA|CLAUDINEI MEDEIROS ANUNCIATO
-44519|REGINALDO DOS SANTOS LOPES|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-44577|POZZA COMERCIO DE GAS LTDA|MARCILENE DE ASSIS
-44870|UEMURA SANCHES LTDA|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-44884|S ALVES TERRA|PATRICIA ESPINDOLA FERREIRA
-45110|SPEEDGAZ COMERCIO VAREJISTA DE GAS|CLAUDINEI MEDEIROS ANUNCIATO
-45142|ANIBAL AGUILERA VARGAS|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-45145|JUNDIAI COMERCIO DE GAS E AGUA LTDA|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-45147|S R R GOMES|MARCILENE DE ASSIS
-45793|VIEIRA E VIEIRA LTDA|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-46349|KERO GAS COMERCIO VAREJISTA DE GAS|PATRICIA ESPINDOLA FERREIRA
-46945|QUELIN REGINA TOMIATTI MOREIRA LTDA|CLAUDINEI MEDEIROS ANUNCIATO
-47624|RUBENS ROBERTO MACENA DA SILVA|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-48785|A R DOS SANTOS FILHO|MARCILENE DE ASSIS
-48790|LIGEIRINHO GAS LTDA|CLAUDINEI MEDEIROS ANUNCIATO
-50160|GAS CHAMA KI TEM LTDA|MARCILENE DE ASSIS
-50175|MANOEL CARDOZO NUNES|MARCILENE DE ASSIS
-50306|E ALVES AVELAR|MARCILENE DE ASSIS
-50709|VICENTE COMERCIO DE GAS LTDA|CLAUDINEI MEDEIROS ANUNCIATO
-52886|AUTO POSTO ANIELLI LTDA|MARCILENE DE ASSIS
-53371|AUTO POSTO IMACULADA CONCEICAO LTDA|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-53727|AUTO POSTO SAN FRANCISCO LTDA|MARCILENE DE ASSIS
-54097|RURAL SHOPPING CAMPO GRANDE|CALL CENTER
-54172|TATYANE COMERCIO DE GAS LTDA|CLAUDINEI MEDEIROS ANUNCIATO
-54344|AUTO POSTO GUAICURUS LTDA|MARCILENE DE ASSIS
-55521|SANTOS E TORRES LTDA|MARCILENE DE ASSIS
-55540|OSMAR DE FREITAS ALEIXO LTDA|MARCILENE DE ASSIS
-56435|SANDER DORNELES PEREIRA JUNIOR|MARCILENE DE ASSIS
-56941|JOAO GABRIEL FIGUEIREDO LTDA|PATRICIA ESPINDOLA FERREIRA
-57427|ROGERIO GAS E AGUA EIRELI|PATRICIA ESPINDOLA FERREIRA
-58383|PORTO CONVENIENCIA COMERCIO DE|MARCILENE DE ASSIS
-58623|EDUARDO DE AZEVEDO BRAGA|PATRICIA ESPINDOLA FERREIRA
-58762|EVERSON ALESSANDRO MOREIRA|PATRICIA ESPINDOLA FERREIRA
-58849|VALDOMIRO MONTEIRO|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-59028|SOCOLOSKI SUPERMERCADO LTDA|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-59038|RIBAS RIBEIRO VENDA DE GAS LTDA|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-59072|NOROESTE COMERCIO DE GAS LTDA|CLAUDINEI MEDEIROS ANUNCIATO
-59644|ADAO ALVES DE CAMARGO|FABIANO FONSECA DE CARVALHO
-59652|MARIA APARECIDA GUEDES LEMES CIA L|CLAUDINEI MEDEIROS ANUNCIATO
-59654|M G DE MATOS|FABIANO FONSECA DE CARVALHO
-59660|ZYZZ DEPOSITO DE GAS E AGUA LTDA|FABIANO FONSECA DE CARVALHO
-59720|SILVANO BELEM DE FREITAS|FABIANO FONSECA DE CARVALHO
-59734|ZOROASTRO RIBEIRO RESENDE|FABIANO FONSECA DE CARVALHO
-59737|CENTER COMERCIO DE GAS E CONVENIENC|FABIANO FONSECA DE CARVALHO
-59767|ROSINEI BRAGA DO NASCIMENTO EIRELI|FABIANO FONSECA DE CARVALHO
-59778|ANTONIO ALTAIR COSTA|FABIANO FONSECA DE CARVALHO
-59779|J R DA SILVA|FABIANO FONSECA DE CARVALHO
-59789|ANTONIO ALTAIR COSTA|FABIANO FONSECA DE CARVALHO
-59815|M P FILHO COMERCIO DE GAS EIRELI|FABIANO FONSECA DE CARVALHO
-59816|MATSUNAGA MARQUES CIA LTDA|FABIANO FONSECA DE CARVALHO
-59820|BERTOZZI BERTOZZI COMERCIO DE COMB|PATRICIA ESPINDOLA FERREIRA
-59828|C CASTRO PAES EIRELI|FABIANO FONSECA DE CARVALHO
-59829|MARILEIDE DE OLIVEIRA TAVEIRA BRUM|CLAUDINEI MEDEIROS ANUNCIATO
-59830|S GARCIA DE MATOS EIRELI|FABIANO FONSECA DE CARVALHO
-59986|G GONCALVES DA SILVA|FABIANO FONSECA DE CARVALHO
-60641|M G COMERCIO VAREJISTA DE GAS LTDA|FABIANO FONSECA DE CARVALHO
-60651|COMERCIO DE GAS PRIMAVERA LTDA|FABIANO FONSECA DE CARVALHO
-61901|CLAUDIO FERNANDO PAREDES FARINHA|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-62206|ISIDORO TEIXEIRA BATISTA|FABIANO FONSECA DE CARVALHO
-62285|DEPOSITO DE GAS PRECO CERTO|FABIANO FONSECA DE CARVALHO
-62394|ANA PAULA DE SOUZA SANTOS|FABIANO FONSECA DE CARVALHO
-62451|DEBORAH BRITO KOSLOSKI CAVALCANTE|CLAUDINEI MEDEIROS ANUNCIATO
-62813|RENATO FERREIRA DOURADO|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-111394|COMERCIO DE GAS PRIMAVERA LTDA|FABIANO FONSECA DE CARVALHO
-116105|EDIVANIA SOUSA NOGUEIRA|PATRICIA ESPINDOLA FERREIRA
-117215|AUTO POSTO SAN CRISTOVAO LTDA|MARCILENE DE ASSIS
-117459|ANDERSON GAS E AUTO SOCORRO LTDA|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-117611|BORGES COMERCIO E SERVICOS LTDA|MARCILENE DE ASSIS
-117810|ALTAS HORAS GAS E CONVENIENCIA LTDA|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-117828|SILVA GAS E AGUA LTDA|CLAUDINEI MEDEIROS ANUNCIATO
-118106|MARIO AUGUSTO CAMARGO|PATRICIA ESPINDOLA FERREIRA
-118769|REDE CHAMA GAS COMERCIO DE GAS LTDA|FABIANO FONSECA DE CARVALHO
-118841|IMPERIO DO GAS LTDA|PATRICIA ESPINDOLA FERREIRA
-119028|GAS SANTA ANA LTDA|CLAUDINEI MEDEIROS ANUNCIATO
-119220|EUZEBIO NIHUES|MARCILENE DE ASSIS
-119511|POSTO PENA BRANCA LTDA|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-119514|S PEREIRA GAS|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-119542|AUTO POSTO LOPES RODRIGUES LTDA|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-119748|BRUNO HENRIQUE SCHREINER LTDA|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-119760|ILDEVI FURTADO DE SOUZA|CLAUDINEI MEDEIROS ANUNCIATO
-119966|REDE CHAMA GAS COMERCIO DE GAS LTDA|FABIANO FONSECA DE CARVALHO
-120167|ANA PAULA DA SILVA SOUZA|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-120398|RONEI RODRIGUES DE SOUZA|MARCILENE DE ASSIS
-120399|SUPRILAR GAS E AGUA LTDA|CLAUDINEI MEDEIROS ANUNCIATO
-121651|QR GAS COMERCIO E TRANSPORTE LTDA|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-121675|FABIANA SILVA DE ARAUJO COMERCIO DE|CLAUDINEI MEDEIROS ANUNCIATO
-122301|A J COMERCIO DE GAS LTDA|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-122625|ALTAS HORAS GAS & CONVENIENCIA LTDA|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-123509|GAS DOIS IRMAOS LTDA|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-124083|NOVA GAS LTDA|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-124674|ALFREDO GUSTAVO VARGAS|MARCILENE DE ASSIS
-125083|COMERCIAL DE ALIMENTOS BETANIA LTDA|CLAUDINEI MEDEIROS ANUNCIATO
-125693|S DO NASCIMENTO PARRA LTDA|MARCILENE DE ASSIS
-125980|COMERCIAL SOARES DISTRIBUIDORA DE|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-126346|ADAIR PARREIRA DE PAULA|PATRICIA ESPINDOLA FERREIRA
-126361|KS SUPERMERCADOS LTDA|PATRICIA ESPINDOLA FERREIRA
-126435|A E A REPRESENTACOES COMERCIAIS E|CLAUDINEI MEDEIROS ANUNCIATO
-126499|HEITOR FERNANDO ANDRADE|CLAUDINEI MEDEIROS ANUNCIATO
-126510|COMERCIO DE GAS DANTAS LTDA|PATRICIA ESPINDOLA FERREIRA
-126594|MARCOS ANTONIO MOURA RABALDELLI|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-126722|AUTO POSTO SANTA CLARA LTDA|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-126833|LAURA S G DA SILVA LTDA|FABIANO FONSECA DE CARVALHO
-126969|LUCAS ORTIZ PEREIRA|PATRICIA ESPINDOLA FERREIRA
-126971|CONVENIENCIA AROEIRA LTDA|MARCILENE DE ASSIS
-127012|REAL GAS E AGUA LTDA|FABIANO FONSECA DE CARVALHO
-127474|WL GAS E AGUA LTDA|PATRICIA ESPINDOLA FERREIRA
-127683|NOVA GAS LTDA|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-128238|COMERCIAL DUAS NACOES LTDA|NATHALIA GUTIERRE LEITE SOARDI NOGUEIRA
-128356|ADRIANO VIEIRA SOARES|CLAUDINEI MEDEIROS ANUNCIATO
-128490|VRC DISTRIBUIDORA DE GAS E BEBIDAS LTDA|CLAUDINEI MEDEIROS ANUNCIATO
-128566|UNIVERSO COMERCIO E DISTRIBUIDORA D|FABIANO FONSECA DE CARVALHO
-128952|DISTRIBUIDORA DE GAS F5 LTDA|PATRICIA ESPINDOLA FERREIRA
-129361|S THOMAZ DOS SANTOS|FABIANO FONSECA DE CARVALHO
-129557|JOICIELI IFRAN SORRILHA|MARCILENE DE ASSIS
-130291|GAS DOIS AMIGOS LTDA|CLAUDINEI MEDEIROS ANUNCIATO
-130520|IMPACTO COMERCIO DE GAS LTDA|CLAUDINEI MEDEIROS ANUNCIATO
-130720|PAIVA E PAIVA LTDA|MARCILENE DE ASSIS`;
-CLIENTES_DEFAULT_RAW.split("\n").forEach(line=>{
-  const p=line.split("|");
-  if(p[0]) DEFAULT_CONFIG.clientes[p[0].trim()]={nome:p[1].trim(),consultor:p[2].trim()};
-});
-
+const TIPOS_DEF_DEFAULT={D001:"PINTURA",D002:"AMASSAMENTO",D003:"ABOLHADURA",D004:"SEM DEFEITO",D005:"EXPOSIÇÃO AO FOGO",D006:"CORROSÃO",D007:"TARA ILEGÍVEL",D008:"FALTA DE TARA",D009:"ERRO DE TARA",D010:"FALTA DE GRAVAÇÕES",D011:"REQUALIFICAÇÃO 15 ANOS",D012:"REQUALIFICAÇÃO 10 ANOS",D013:"VAZAMENTO",D014:"FALTA DE LACRE",D015:"FALTA DE RÓTULO INFORM.",D016:"PESO",D017:"FALTA DE O'RING",D018:"OM'S",D019:"VÁLVULA BAIXA",D020:"RESÍDUOS",D021:"DECANTAÇÃO",D022:"ACESSÓRIO DANIFICADO",D023:"EXCESSO DE AR/PRESSÃO",D024:"O'RING DANIFICADO",D025:"VASILHAME AUTUADO"};
+const LOCAIS_DEF_DEFAULT={L001:"VASILHAME",L002:"CORPO",L003:"ALÇA",L004:"BASE",L005:"CALOTA SUPERIOR",L006:"CALOTA INFERIOR",L007:"FLANGE",L008:"SOLDA LONGITUDINAL",L009:"SOLDA CIRCUNFERENCIAL",L010:"FUNDO",L011:"VÁLVULA ROSCA INTERNA",L012:"VÁLVULA ROSCA EXTERNA",L013:"DISP. SEGURANÇA/LIGA",L014:"DISP. SEGUR/ROSCA EXT",L015:"RÓTULO",L016:"NÃO APLICÁVEL",L017:"VÁLVULA DEF. INTERNO",L018:"VÁLVULA SEXTAVADO",L019:"MEDIDOR/DEF. INTERNO",L020:"MEDIDOR/ROSCA EXT",L021:"V. MAX ENCH/DEF INT",L022:"V. MAX ENCH/ROSCA EXT",L023:"V. SERVIÇO/DEF INT",L024:"V. SERVIÇO/ROSCA EXT",L025:"ENGATE MACHO"};
+const MATS_DEFAULT={"200036":{nome:"P-13",vasilhame:"Botijão 13kg",visivel:true},"200038":{nome:"P-20",vasilhame:"Botijão 20kg",visivel:true},"200039":{nome:"P-45",vasilhame:"Botijão 45kg",visivel:true}};
 const MESES_NOME=["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
 
-/* ============================================================
-   ESTADO GLOBAL
-   ============================================================ */
-let CONFIG = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
-const state={
-  defeitos:null, producao:null,
-  fileDefHandle:null, fileProdHandle:null, // para o refresh (File API)
-  fileDefRef:null, fileProdRef:null,
-  filtros:{anos:[],mes:"",material:"",consultor:"",cliente:""},
-  charts:{}, currentPage:"overview"
-};
+// ===== CONFIG =====
+const DEFAULT_CONFIG={meta_ppm:1541,metas_mensal:{},decimais_ppm:0,tipos_defeito:{...TIPOS_DEF_DEFAULT},locais_defeito:{...LOCAIS_DEF_DEFAULT},materiais:JSON.parse(JSON.stringify(MATS_DEFAULT)),clientes:JSON.parse(JSON.stringify(CLIENTES_DEFAULT))};
+let CONFIG=JSON.parse(JSON.stringify(DEFAULT_CONFIG));
 
-/* ============================================================
-   UTILITÁRIOS
-   ============================================================ */
+// ===== STATE =====
+const state={defeitos:null,producao:null,defRaw:[],prodRaw:[],defKeys:new Set(),prodKeys:new Set(),filtros:{anos:[],mes:"",material:"",consultor:"",cliente:""},mode:"ppm",charts:{},currentPage:"overview"};
+
+// ===== UTILS =====
 const fmtNum=n=>(n||0).toLocaleString('pt-BR',{maximumFractionDigits:0});
 const fmtDec=(n,d=1)=>(n||0).toLocaleString('pt-BR',{maximumFractionDigits:d,minimumFractionDigits:d});
-function fmtPPM(n){const d=CONFIG.decimais_ppm||0;return (n||0).toLocaleString('pt-BR',{maximumFractionDigits:d,minimumFractionDigits:d});}
-
-function getMetaAjustada(){
-  // meta é sempre PPM — o "período" apenas define como é mostrada ao usuário na interface.
-  // Como PPM é adimensional por unidade produzida, a meta é a mesma independente do período escolhido.
-  // O ajuste "por período" serve para comparar: PPM_ano vs meta, PPM_mes vs meta, PPM_dia vs meta
-  // (todos em PPM, mas agrupamentos diferentes). Então só retorna a meta direto.
+function fmtRate(n){const d=CONFIG.decimais_ppm||0;return(n||0).toLocaleString('pt-BR',{maximumFractionDigits:d,minimumFractionDigits:d});}
+function calcRate(def,prod){if(prod<=0)return 0;const r=def/prod;if(state.mode==='ppm')return r*1e6;if(state.mode==='permil')return r*1e3;if(state.mode==='pct')return r*100;if(state.mode==='cp100')return r*100;return r*1e6;}
+function rateSuffix(){return{ppm:'PPM',permil:'‰',pct:'%',cp100:'cp100'}[state.mode]||'PPM';}
+function getMetaForPeriod(ano,mes){
+  const key=`${ano}-${String(mes).padStart(2,'0')}`;
+  if(CONFIG.metas_mensal[key]!==undefined && CONFIG.metas_mensal[key]!=='')return Number(CONFIG.metas_mensal[key]);
   return CONFIG.meta_ppm;
 }
-
-function parseDate(v){
-  if(!v)return null;
-  if(v instanceof Date)return v;
-  if(typeof v==='number'){const d=XLSX.SSF.parse_date_code(v);if(d)return new Date(d.y,d.m-1,d.d);}
-  if(typeof v==='string'){const m=v.match(/(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})/);if(m){let y=parseInt(m[3]);if(y<100)y+=2000;return new Date(y,parseInt(m[2])-1,parseInt(m[1]));}}
-  return null;
-}
-
+function getMetaGlobal(){return CONFIG.meta_ppm;}
+function parseDate(v){if(!v)return null;if(v instanceof Date)return v;if(typeof v==='number'){const d=XLSX.SSF.parse_date_code(v);if(d)return new Date(d.y,d.m-1,d.d);}if(typeof v==='string'){const m=v.match(/(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})/);if(m){let y=parseInt(m[3]);if(y<100)y+=2000;return new Date(y,parseInt(m[2])-1,parseInt(m[1]));}}return null;}
 function showLoading(msg){document.getElementById('loadMsg').textContent=msg||"Processando…";document.getElementById('loading').classList.add('show');}
 function hideLoading(){document.getElementById('loading').classList.remove('show');}
-function toast(msg, err=false){
-  const t=document.createElement('div');t.className='toast'+(err?' err':'');t.textContent=msg;
-  document.body.appendChild(t);setTimeout(()=>t.remove(),3500);
+function toast(msg,err=false){const t=document.createElement('div');t.className='toast'+(err?' err':'');t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3500);}
+
+// ===== DATA LOADING WITH DEDUP =====
+async function readXlsx(file){const data=await file.arrayBuffer();const wb=XLSX.read(data,{type:'array',cellDates:true});const ws=wb.Sheets[wb.SheetNames[0]];return XLSX.utils.sheet_to_json(ws,{defval:null,raw:true});}
+
+function processDefRow(r){
+  const cli=String(r['Cliente']||'').replace(/^0+/,'');
+  const mat=String(r['Material']||'').replace(/^0+/,'');
+  const dtAbert=parseDate(r['Data da nota']);
+  const dtFech=parseDate(r['Encerram.por data']);
+  const dt=dtFech||dtAbert;
+  const nota=String(r['Nota']||'');
+  const item=String(r['Item']||'');
+  const key=`${nota}|${item}`;
+  const c=CONFIG.clientes[cli];
+  return{key,cliente:cli,material:mat,dano:r['Código do dano'],local:r['Code parte do objeto'],nota,item,qInt:Number(r['Qtd.defeituosa interna'])||0,data:dt,dataAbert:dtAbert,dataFech:dtFech,ano:dt?dt.getFullYear():null,mes:dt?dt.getMonth()+1:null,consultor:c?.consultor||'Não mapeado',nomeCli:c?.nome||`[${cli}]`,diasFech:(dtAbert&&dtFech)?Math.round((dtFech-dtAbert)/86400000):null};
 }
 
-/* ============================================================
-   LEITURA DE ARQUIVOS
-   ============================================================ */
-async function readFile(file,kind){
-  showLoading(`Lendo ${kind}…`);
-  const data=await file.arrayBuffer();
-  const wb=XLSX.read(data,{type:'array',cellDates:true});
-  const ws=wb.Sheets[wb.SheetNames[0]];
-  return XLSX.utils.sheet_to_json(ws,{defval:null,raw:true});
+function processProdRow(r){
+  const mat=String(r['Material']||'').replace(/^0+/,'');
+  const dt=parseDate(r['Data de lançamento']||r['Data do documento']);
+  const tipo=String(r['Tipo de movimento']||'');
+  const qtdKey=Object.keys(r).find(k=>k.toLowerCase().includes('qtd'));
+  const qtd=Number(r[qtdKey])||0;
+  const dStr=dt?dt.toISOString().slice(0,10):'';
+  const key=`${mat}|${dStr}|${qtd}|${tipo}`;
+  return{key,material:mat,qtd,data:dt,tipo,ano:dt?dt.getFullYear():null,mes:dt?dt.getMonth()+1:null};
 }
 
-function processDefeitos(rows){
-  return rows.map(r=>{
-    const cli=String(r['Cliente']||'').replace(/^0+/,'');
-    const mat=String(r['Material']||'').replace(/^0+/,'');
-    const dtAbert=parseDate(r['Data da nota']);
-    const dtFech=parseDate(r['Encerram.por data']);
-    // Usa data de FECHAMENTO (conforme última decisão); se não tiver, cai para abertura
-    const dt = dtFech || dtAbert;
-    const cliData = CONFIG.clientes[cli];
-    return {
-      cliente:cli, material:mat, dano:r['Código do dano'], local:r['Code parte do objeto'],
-      nota:r['Nota'], item:r['Item'],
-      qInt:Number(r['Qtd.defeituosa interna'])||0,
-      qExt:Number(r['Qtd.defeituosa externa'])||0,
-      data:dt, dataAbert:dtAbert, dataFech:dtFech,
-      ano:dt?dt.getFullYear():null, mes:dt?dt.getMonth()+1:null,
-      consultor:(cliData?.consultor)||'Não mapeado',
-      nomeCli:(cliData?.nome)||`[${cli}]`,
-      diasFech:(dtAbert&&dtFech)?Math.round((dtFech-dtAbert)/86400000):null
-    };
-  }).filter(r=>r.data&&r.qInt>0);
-}
-
-function processProducao(rows){
-  return rows.map(r=>{
-    const mat=String(r['Material']||'').replace(/^0+/,'');
-    const dt=parseDate(r['Data de lançamento']||r['Data do documento']);
-    const tipo=String(r['Tipo de movimento']||'');
-    const qtdKey=Object.keys(r).find(k=>k.toLowerCase().includes('qtd'));
-    return {
-      material:mat, qtd:Number(r[qtdKey])||0, data:dt, tipo:tipo,
-      ano:dt?dt.getFullYear():null, mes:dt?dt.getMonth()+1:null
-    };
-  }).filter(r=>r.data&&(r.tipo==='131'||r.tipo==='132'));
-}
-
-async function loadDefeitosFile(file){
+async function loadDefFiles(files){
+  showLoading('Lendo Defeitos…');
   try{
-    state.fileDefRef = file;
-    const rows=await readFile(file,'Defeitos');
-    state.defeitos = processDefeitos(rows);
+    let added=0;
+    for(const file of files){
+      const rows=await readXlsx(file);
+      for(const r of rows){
+        const p=processDefRow(r);
+        if(p.data && p.qInt>0 && !state.defKeys.has(p.key)){
+          state.defKeys.add(p.key);
+          state.defRaw.push(p);
+          added++;
+        }
+      }
+    }
+    state.defeitos=state.defRaw;
     document.getElementById('btnDef').classList.add('ok');
-    document.getElementById('lblDef').textContent=`Defeitos: ${state.defeitos.length.toLocaleString('pt-BR')} reg.`;
-    document.getElementById('rfDef').disabled = false;
+    document.getElementById('lblDef').textContent=`Defeitos: ${fmtNum(state.defRaw.length)} reg.`;
+    if(added>0)toast(`${fmtNum(added)} defeitos novos adicionados`);
+    else toast('Nenhum defeito novo (todos duplicados)');
     afterLoad();
-  }catch(err){toast("Erro: "+err.message, true);}
+  }catch(err){toast('Erro: '+err.message,true);}
   finally{hideLoading();}
 }
 
-async function loadProducaoFile(file){
+async function loadProdFiles(files){
+  showLoading('Lendo Produção…');
   try{
-    state.fileProdRef = file;
-    const rows=await readFile(file,'Produção');
-    state.producao = processProducao(rows);
+    let added=0;
+    for(const file of files){
+      const rows=await readXlsx(file);
+      for(const r of rows){
+        const p=processProdRow(r);
+        if(p.data && (p.tipo==='131'||p.tipo==='132') && !state.prodKeys.has(p.key)){
+          state.prodKeys.add(p.key);
+          state.prodRaw.push(p);
+          added++;
+        }
+      }
+    }
+    state.producao=state.prodRaw;
     document.getElementById('btnProd').classList.add('ok');
-    document.getElementById('lblProd').textContent=`Produção: ${state.producao.length.toLocaleString('pt-BR')} reg.`;
-    document.getElementById('rfProd').disabled = false;
+    document.getElementById('lblProd').textContent=`Produção: ${fmtNum(state.prodRaw.length)} reg.`;
+    if(added>0)toast(`${fmtNum(added)} registros de produção novos`);
+    else toast('Nenhum registro novo de produção');
     afterLoad();
-  }catch(err){toast("Erro: "+err.message, true);}
+  }catch(err){toast('Erro: '+err.message,true);}
   finally{hideLoading();}
 }
 
-document.getElementById('fileDef').addEventListener('change', async e=>{
-  const f=e.target.files[0]; if(!f) return; await loadDefeitosFile(f);
-});
-document.getElementById('fileProd').addEventListener('change', async e=>{
-  const f=e.target.files[0]; if(!f) return; await loadProducaoFile(f);
-});
-document.getElementById('rfDef').addEventListener('click', ()=>document.getElementById('fileDef').click());
-document.getElementById('rfProd').addEventListener('click', ()=>document.getElementById('fileProd').click());
+document.getElementById('fileDef').addEventListener('change',e=>{if(e.target.files.length)loadDefFiles([...e.target.files]);});
+document.getElementById('fileProd').addEventListener('change',e=>{if(e.target.files.length)loadProdFiles([...e.target.files]);});
+document.getElementById('rfBtn').addEventListener('click',()=>{document.getElementById('fileDef').click();document.getElementById('fileProd').click();});
 
 function afterLoad(){
   if(state.defeitos&&state.producao){
@@ -570,802 +317,465 @@ function afterLoad(){
   }
 }
 
-/* Reprocessa os dados já carregados (quando config muda) */
 function reprocessData(){
-  if(!state.fileDefRef || !state.fileProdRef) return;
-  // só reprocessamos via nome de cliente/consultor — que usa o CONFIG
-  state.defeitos.forEach(r=>{
-    const c = CONFIG.clientes[r.cliente];
-    r.consultor = c?.consultor || 'Não mapeado';
-    r.nomeCli = c?.nome || `[${r.cliente}]`;
-  });
+  state.defRaw.forEach(r=>{const c=CONFIG.clientes[r.cliente];r.consultor=c?.consultor||'Não mapeado';r.nomeCli=c?.nome||`[${r.cliente}]`;});
 }
 
-/* ============================================================
-   FILTROS
-   ============================================================ */
+// ===== FILTERS =====
 function populateFilters(){
   const anos=new Set(),mats=new Set(),conss=new Set(),clis=new Set();
   state.defeitos.forEach(r=>{if(r.ano)anos.add(r.ano);if(r.material)mats.add(r.material);if(r.consultor)conss.add(r.consultor);if(r.cliente)clis.add(r.cliente);});
   state.producao.forEach(r=>{if(r.ano)anos.add(r.ano);if(r.material)mats.add(r.material);});
-
-  // multi-anos como chips
-  const anosArr = [...anos].sort();
-  const ctn = document.getElementById('fAnos');
-  ctn.innerHTML = '';
+  const anosArr=[...anos].sort();
+  const ctn=document.getElementById('fAnos');ctn.innerHTML='';
   anosArr.forEach(a=>{
-    const chip = document.createElement('div');
-    chip.className='year-chip'; chip.dataset.ano=a; chip.textContent=a;
-    chip.addEventListener('click', ()=>{
-      chip.classList.toggle('active');
-      state.filtros.anos = [...document.querySelectorAll('.year-chip.active')].map(c=>parseInt(c.dataset.ano));
-      renderAll();
-    });
+    const chip=document.createElement('div');chip.className='year-chip active';chip.dataset.ano=a;chip.textContent=a;
+    chip.addEventListener('click',()=>{chip.classList.toggle('active');state.filtros.anos=[...document.querySelectorAll('.year-chip.active')].map(c=>parseInt(c.dataset.ano));renderAll();});
     ctn.appendChild(chip);
   });
-
+  state.filtros.anos=anosArr.slice(); // default: todos selecionados
   fillSelect('fMes',[1,2,3,4,5,6,7,8,9,10,11,12],v=>`${String(v).padStart(2,'0')} - ${MESES_NOME[v-1]}`);
-  fillSelect('fMat',[...mats].sort(),v=>CONFIG.materiais[v]?`${v} · ${CONFIG.materiais[v].nome}`:v);
+  const visMats=[...mats].filter(m=>CONFIG.materiais[m]?.visivel!==false).sort();
+  fillSelect('fMat',visMats,v=>CONFIG.materiais[v]?`${v} · ${CONFIG.materiais[v].nome}`:v);
   fillSelect('fCons',[...conss].sort(),v=>v);
-  const cliOpts=[...clis].sort((a,b)=>{const na=CONFIG.clientes[a]?.nome||`[${a}]`;const nb=CONFIG.clientes[b]?.nome||`[${b}]`;return na.localeCompare(nb);});
+  const cliOpts=[...clis].sort((a,b)=>{const na=CONFIG.clientes[a]?.nome||`[${a}]`,nb=CONFIG.clientes[b]?.nome||`[${b}]`;return na.localeCompare(nb);});
   fillSelect('fCli',cliOpts,v=>CONFIG.clientes[v]?`${CONFIG.clientes[v].nome} (${v})`:`[${v}]`);
-
-  ['fMes','fMat','fCons','fCli'].forEach(id=>{
-    document.getElementById(id).addEventListener('change',()=>{
-      state.filtros.mes=document.getElementById('fMes').value;
-      state.filtros.material=document.getElementById('fMat').value;
-      state.filtros.consultor=document.getElementById('fCons').value;
-      state.filtros.cliente=document.getElementById('fCli').value;
-      renderAll();
-    });
-  });
-  document.getElementById('btnClear').addEventListener('click',()=>{
-    state.filtros={anos:[],mes:"",material:"",consultor:"",cliente:""};
-    ['fMes','fMat','fCons','fCli'].forEach(id=>document.getElementById(id).value='');
-    document.querySelectorAll('.year-chip').forEach(c=>c.classList.remove('active'));
-    renderAll();
-  });
+  ['fMes','fMat','fCons','fCli'].forEach(id=>{document.getElementById(id).onchange=()=>{state.filtros.mes=document.getElementById('fMes').value;state.filtros.material=document.getElementById('fMat').value;state.filtros.consultor=document.getElementById('fCons').value;state.filtros.cliente=document.getElementById('fCli').value;renderAll();};});
+  document.getElementById('btnClear').onclick=()=>{state.filtros={anos:[...anosArr],mes:"",material:"",consultor:"",cliente:""};['fMes','fMat','fCons','fCli'].forEach(id=>document.getElementById(id).value='');document.querySelectorAll('.year-chip').forEach(c=>c.classList.add('active'));renderAll();};
 }
+function fillSelect(id,vals,label){const sel=document.getElementById(id);sel.innerHTML='<option value="">Todos</option>';vals.forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=label(v);sel.appendChild(o);});}
+function applyFilters(rows,isProd=false){const f=state.filtros;return rows.filter(r=>{if(f.anos.length&&!f.anos.includes(r.ano))return false;if(f.mes&&String(r.mes)!==String(f.mes))return false;if(f.material&&r.material!==f.material)return false;if(!isProd){if(f.consultor&&r.consultor!==f.consultor)return false;if(f.cliente&&r.cliente!==f.cliente)return false;}return true;});}
 
-function fillSelect(id,vals,label){
-  const sel=document.getElementById(id);
-  sel.innerHTML='<option value="">Todos</option>';
-  vals.forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=label(v);sel.appendChild(o);});
-}
+// Mode toggle
+document.getElementById('modeToggle').addEventListener('click',e=>{const opt=e.target.closest('.mode-opt');if(!opt)return;document.querySelectorAll('#modeToggle .mode-opt').forEach(o=>o.classList.remove('active'));opt.classList.add('active');state.mode=opt.dataset.mode;if(state.defeitos&&state.producao)renderAll();});
 
-function applyFilters(rows,isProd=false){
-  const f=state.filtros;
-  return rows.filter(r=>{
-    if(f.anos.length && !f.anos.includes(r.ano))return false;
-    if(f.mes&&String(r.mes)!==String(f.mes))return false;
-    if(f.material&&r.material!==f.material)return false;
-    if(!isProd){
-      if(f.consultor&&r.consultor!==f.consultor)return false;
-      if(f.cliente&&r.cliente!==f.cliente)return false;
-    }
-    return true;
-  });
-}
+// ===== TABS (filter only up to trends, not settings/guide) =====
+document.getElementById('tabs').addEventListener('click',e=>{const t=e.target.closest('.tab');if(!t)return;document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));t.classList.add('active');const p=t.dataset.page;state.currentPage=p;document.getElementById('page-'+p).classList.add('active');if(p==='settings')renderSettings();else if(p==='guide')renderGuide();else if(state.defeitos&&state.producao)renderPage(p);});
 
-/* ============================================================
-   ABAS
-   ============================================================ */
-document.getElementById('tabs').addEventListener('click',e=>{
-  const t=e.target.closest('.tab');if(!t)return;
-  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
-  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
-  t.classList.add('active');
-  const p=t.dataset.page;
-  state.currentPage=p;
-  document.getElementById('page-'+p).classList.add('active');
-  if(p==='settings') renderSettings();
-  else if(state.defeitos&&state.producao) renderPage(p);
-});
-
-/* ============================================================
-   AGREGAÇÕES
-   ============================================================ */
-function aggSum(rows,keyFn,valFn){const m=new Map();rows.forEach(r=>{const k=keyFn(r);m.set(k,(m.get(k)||0)+valFn(r));});return m;}
-function totalDef(rows){return rows.reduce((s,r)=>s+r.qInt,0);}
-function totalProd(rows){return rows.reduce((s,r)=>s+r.qtd,0);}
-function ppm(d,p){return p>0?(d/p)*1e6:0;}
-
-/* ============================================================
-   GRÁFICOS - Chart.js
-   ============================================================ */
+// ===== CHART HELPERS =====
 Chart.defaults.color='#8b93a7';Chart.defaults.borderColor='#262d3d';Chart.defaults.font.family="'Inter Tight', sans-serif";
 function destroyChart(id){if(state.charts[id]){state.charts[id].destroy();delete state.charts[id];}}
 function makeChart(id,cfg){destroyChart(id);const ctx=document.getElementById(id);if(!ctx)return;state.charts[id]=new Chart(ctx,cfg);}
 const COLORS=['#ff5b3a','#ffd166','#3ddc97','#6cb6ff','#b07cff','#ff8fa3','#7cd5d5','#ffa07a','#c5b358','#9bd5a6','#e07a5f','#81b29a'];
 
-function renderAll(){updateStatus();renderPage(state.currentPage);}
+function aggSum(rows,keyFn,valFn){const m=new Map();rows.forEach(r=>{const k=keyFn(r);m.set(k,(m.get(k)||0)+valFn(r));});return m;}
+function totalDef(rows){return rows.reduce((s,r)=>s+r.qInt,0);}
+function totalProd(rows){return rows.reduce((s,r)=>s+r.qtd,0);}
 
+function renderAll(){updateStatus();renderPage(state.currentPage);}
 function updateStatus(){
   if(!state.defeitos||!state.producao){document.getElementById('status').innerHTML='';return;}
   const def=applyFilters(state.defeitos),prod=applyFilters(state.producao,true);
   const td=totalDef(def),tp=totalProd(prod);
-  const meta = getMetaAjustada();
-  document.getElementById('status').innerHTML=
-    `<span><b>Defeitos filtrados:</b> ${fmtNum(td)}</span>`+
-    `<span><b>Produção filtrada:</b> ${fmtNum(tp)}</span>`+
-    `<span><b>PPM:</b> ${fmtPPM(ppm(td,tp))}</span>`+
-    `<span><b>Meta:</b> ${fmtPPM(meta)}</span>`+
-    `<span style="margin-left:auto">Atualizado ${new Date().toLocaleString('pt-BR')}</span>`;
+  const meta=getMetaGlobal();const sfx=rateSuffix();
+  document.getElementById('status').innerHTML=`<span><b>Defeitos:</b> ${fmtNum(td)}</span><span><b>Produção:</b> ${fmtNum(tp)}</span><span><b>${sfx}:</b> ${fmtRate(calcRate(td,tp))}</span><span><b>Meta:</b> ${fmtRate(meta)}</span><span style="margin-left:auto">${new Date().toLocaleString('pt-BR')}</span>`;
 }
+function renderPage(p){if(p==='settings'){renderSettings();return;}if(p==='guide'){renderGuide();return;}if(!state.defeitos||!state.producao)return;({overview:renderOverview,defects:renderDefects,clients:renderClients,consultants:renderConsultants,types:renderTypes,trends:renderTrends})[p]?.();}
 
-function renderPage(p){
-  if(p==='settings'){renderSettings();return;}
-  if(!state.defeitos||!state.producao)return;
-  if(p==='overview')renderOverview();
-  else if(p==='defects')renderDefects();
-  else if(p==='clients')renderClients();
-  else if(p==='consultants')renderConsultants();
-  else if(p==='types')renderTypes();
-  else if(p==='trends')renderTrends();
-}
-
-/* ============================================================
-   01 · VISÃO GERAL
-   ============================================================ */
+// ====================================================================
+//  01 · VISÃO GERAL
+// ====================================================================
 function renderOverview(){
   const def=applyFilters(state.defeitos),prod=applyFilters(state.producao,true);
-  const td=totalDef(def),tp=totalProd(prod),pp=ppm(td,tp);
-  const meta = getMetaAjustada();
-  const clisAtv=new Set(def.map(r=>r.cliente)).size;
-  const consAtv=new Set(def.map(r=>r.consultor)).size;
-  const tempo=def.filter(r=>r.diasFech!=null&&r.diasFech>=0).map(r=>r.diasFech);
-  const tempoMedio=tempo.length?tempo.reduce((a,b)=>a+b,0)/tempo.length:0;
-  const ppmClass=pp<=meta?'good':'bad';
-  const ppmBadge=pp<=meta?`<span class="badge good">▼ Dentro da meta</span>`:`<span class="badge bad">▲ Acima da meta</span>`;
-
-  // Novo: indicador Tipo+Local combinado (destaque)
-  const aComb=aggSum(def, r=>`${r.dano}||${r.local}`, r=>r.qInt);
-  const topComb=[...aComb.entries()].map(([k,v])=>{
-    const [d,l]=k.split('||');
-    return {d,l,v,lbl:`${d}·${(CONFIG.tipos_defeito[d]||d).substring(0,20)} × ${l}·${(CONFIG.locais_defeito[l]||l).substring(0,18)}`};
-  }).sort((a,b)=>b.v-a.v).slice(0,12);
+  const td=totalDef(def),tp=totalProd(prod);const rate=calcRate(td,tp);const meta=getMetaGlobal();const sfx=rateSuffix();
+  const clisAtv=new Set(def.map(r=>r.cliente)).size;const consAtv=new Set(def.map(r=>r.consultor)).size;
+  const tempo=def.filter(r=>r.diasFech!=null&&r.diasFech>=0).map(r=>r.diasFech);const tempoMedio=tempo.length?tempo.reduce((a,b)=>a+b,0)/tempo.length:0;
+  const rateClass=rate<=meta?'good':'bad';const rateBadge=rate<=meta?`<span class="badge good">▼ Dentro da meta</span>`:`<span class="badge bad">▲ Acima da meta</span>`;
+  const aComb=aggSum(def,r=>`${r.dano}||${r.local}`,r=>r.qInt);
+  const topComb=[...aComb.entries()].map(([k,v])=>{const[d,l]=k.split('||');return{d,l,v,lbl:`${d}·${(CONFIG.tipos_defeito[d]||d).substring(0,18)} × ${l}·${(CONFIG.locais_defeito[l]||l).substring(0,16)}`};}).sort((a,b)=>b.v-a.v).slice(0,12);
 
   document.getElementById('page-overview').innerHTML=`
     <div class="kpis">
-      <div class="kpi ${ppmClass}"><div class="lbl">PPM Geral</div><div class="val">${fmtPPM(pp)}</div><div class="sub">Meta: ${fmtPPM(meta)} ${ppmBadge}</div></div>
-      <div class="kpi info"><div class="lbl">Defeitos (internos)</div><div class="val">${fmtNum(td)}</div><div class="sub">${def.length.toLocaleString('pt-BR')} linhas</div></div>
+      <div class="kpi ${rateClass}"><div class="lbl">${sfx} Geral</div><div class="val">${fmtRate(rate)}</div><div class="sub">Meta: ${fmtRate(meta)} ${rateBadge}</div></div>
+      <div class="kpi info"><div class="lbl">Defeitos (internos)</div><div class="val">${fmtNum(td)}</div><div class="sub">${fmtNum(def.length)} linhas</div></div>
       <div class="kpi info"><div class="lbl">Produção</div><div class="val">${fmtNum(tp)}</div><div class="sub">tipos 131 + 132</div></div>
-      <div class="kpi warn"><div class="lbl">Clientes ativos</div><div class="val">${fmtNum(clisAtv)}</div><div class="sub">com defeitos</div></div>
+      <div class="kpi warn"><div class="lbl">Clientes ativos</div><div class="val">${fmtNum(clisAtv)}</div></div>
       <div class="kpi warn"><div class="lbl">Consultores</div><div class="val">${fmtNum(consAtv)}</div></div>
-      <div class="kpi"><div class="lbl">Tempo médio encerramento</div><div class="val">${fmtDec(tempoMedio,1)}</div><div class="sub">dias (abertura→fechamento)</div></div>
+      <div class="kpi"><div class="lbl">Tempo médio encerr.</div><div class="val">${fmtDec(tempoMedio,1)}</div><div class="sub">dias</div></div>
     </div>
-
-    <!-- NOVO DESTAQUE: Tipo + Local combinado -->
-    <div class="card featured tall">
-      <h3>★ Top Combinações: Tipo de Defeito × Local</h3>
-      <div class="desc">Análise cruzada — os 12 pares mais frequentes</div>
-      <div class="canvas-wrap"><canvas id="cOvCombo"></canvas></div>
-    </div>
-
-    <div class="grid grid-2">
-      <div class="card tall"><h3>PPM por Ano vs. Meta</h3><div class="desc">Evolução anual do PPM (meta ${fmtPPM(meta)})</div><div class="canvas-wrap"><canvas id="cOvPPM"></canvas></div></div>
-      <div class="card tall"><h3>Pareto · Tipos de Defeito</h3><div class="desc">80/20 dos tipos mais frequentes</div><div class="canvas-wrap"><canvas id="cOvPareto"></canvas></div></div>
+    <div class="card featured tall"><h3>★ Top Combinações: Tipo × Local</h3><div class="desc">Os 12 pares mais frequentes</div><div class="canvas-wrap"><canvas id="cOvCombo"></canvas></div></div>
+    <div class="grid grid-2" style="margin-top:18px">
+      <div class="card tall"><h3>${sfx} por Ano vs. Meta</h3><div class="desc">Meta ${fmtRate(meta)}</div><div class="canvas-wrap"><canvas id="cOvPPM"></canvas></div></div>
+      <div class="card tall"><h3>Pareto · Tipos de Defeito</h3><div class="desc">80/20</div><div class="canvas-wrap"><canvas id="cOvPareto"></canvas></div></div>
     </div>
     <div class="grid grid-3">
-      <div class="card tall"><h3>Top 10 Clientes</h3><div class="desc">Por defeitos internos</div><div class="canvas-wrap"><canvas id="cOvCli"></canvas></div></div>
-      <div class="card tall"><h3>Defeitos por Consultor</h3><div class="desc">Distribuição</div><div class="canvas-wrap"><canvas id="cOvCons"></canvas></div></div>
-      <div class="card tall"><h3>Local do Defeito</h3><div class="desc">Onde acontecem</div><div class="canvas-wrap"><canvas id="cOvLocal"></canvas></div></div>
+      <div class="card tall"><h3>Top 10 Clientes</h3><div class="canvas-wrap"><canvas id="cOvCli"></canvas></div></div>
+      <div class="card tall"><h3>Defeitos por Consultor</h3><div class="canvas-wrap"><canvas id="cOvCons"></canvas></div></div>
+      <div class="card tall"><h3>Local do Defeito</h3><div class="canvas-wrap"><canvas id="cOvLocal"></canvas></div></div>
     </div>
     <div class="grid grid-2">
-      <div class="card tall"><h3>Evolução Mensal · Defeitos vs. Produção</h3><div class="desc">Série temporal completa</div><div class="canvas-wrap"><canvas id="cOvMensal"></canvas></div></div>
-      <div class="card tall"><h3>PPM por Material</h3><div class="desc">P-13, P-20, P-45 vs. meta</div><div class="canvas-wrap"><canvas id="cOvMat"></canvas></div></div>
+      <div class="card tall"><h3>Evolução Mensal</h3><div class="desc">Defeitos vs. Produção</div><div class="canvas-wrap"><canvas id="cOvMensal"></canvas></div></div>
+      <div class="card tall"><h3>${sfx} por Material</h3><div class="canvas-wrap"><canvas id="cOvMat"></canvas></div></div>
     </div>`;
 
-  // Combinado
-  makeChart('cOvCombo',{
-    type:'bar',
-    data:{labels:topComb.map(r=>r.lbl),datasets:[{data:topComb.map(r=>r.v),backgroundColor:'#ff5b3a',borderRadius:3}]},
-    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${fmtNum(c.parsed.x)} defeitos`}}}}
-  });
-
-  // PPM ano
-  {const aD=aggSum(def,r=>r.ano,r=>r.qInt),aP=aggSum(prod,r=>r.ano,r=>r.qtd);
-   const anos=[...new Set([...aD.keys(),...aP.keys()])].sort();
-   const ppms=anos.map(a=>ppm(aD.get(a)||0,aP.get(a)||0));
-   makeChart('cOvPPM',{type:'bar',data:{labels:anos,datasets:[{label:'PPM',data:ppms,backgroundColor:ppms.map(v=>v<=meta?'#3ddc97':'#ff5b6e'),borderRadius:4},{type:'line',label:`Meta ${fmtPPM(meta)}`,data:anos.map(()=>meta),borderColor:'#ffd166',borderWidth:2,borderDash:[6,4],pointRadius:0,fill:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true,ticks:{callback:v=>fmtPPM(v)}}}}});}
-
-  // Pareto
-  {const a=aggSum(def,r=>r.dano,r=>r.qInt);
-   const arr=[...a.entries()].map(([k,v])=>({k,lbl:`${k}·${(CONFIG.tipos_defeito[k]||k).substring(0,18)}`,v})).sort((a,b)=>b.v-a.v).slice(0,12);
-   const total=arr.reduce((s,r)=>s+r.v,0);let acc=0;const cum=arr.map(r=>{acc+=r.v;return total?(acc/total*100):0;});
-   makeChart('cOvPareto',{type:'bar',data:{labels:arr.map(r=>r.lbl),datasets:[{label:'Defeitos',data:arr.map(r=>r.v),backgroundColor:'#ff5b3a',borderRadius:3,yAxisID:'y'},{type:'line',label:'% Acumulado',data:cum,borderColor:'#ffd166',borderWidth:2,pointRadius:3,yAxisID:'y2',tension:.2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true,position:'left'},y2:{beginAtZero:true,max:100,position:'right',grid:{display:false},ticks:{callback:v=>v+'%'}}}}});}
-
-  // Top clientes
-  {const a=aggSum(def,r=>r.cliente,r=>r.qInt);
-   const arr=[...a.entries()].map(([k,v])=>({lbl:(CONFIG.clientes[k]?.nome||`[${k}]`).substring(0,28),v})).sort((a,b)=>b.v-a.v).slice(0,10);
-   makeChart('cOvCli',{type:'bar',data:{labels:arr.map(r=>r.lbl),datasets:[{data:arr.map(r=>r.v),backgroundColor:'#6cb6ff',borderRadius:3}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});}
-
-  // Consultor
-  {const a=aggSum(def,r=>r.consultor,r=>r.qInt);
-   const arr=[...a.entries()].sort((a,b)=>b[1]-a[1]);
-   makeChart('cOvCons',{type:'doughnut',data:{labels:arr.map(r=>r[0]),datasets:[{data:arr.map(r=>r[1]),backgroundColor:COLORS,borderColor:'#161a23',borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:10}}}}}});}
-
-  // Local
-  {const a=aggSum(def,r=>r.local,r=>r.qInt);
-   const arr=[...a.entries()].map(([k,v])=>({lbl:(CONFIG.locais_defeito[k]||k).substring(0,22),v})).sort((a,b)=>b.v-a.v).slice(0,10);
-   makeChart('cOvLocal',{type:'bar',data:{labels:arr.map(r=>r.lbl),datasets:[{data:arr.map(r=>r.v),backgroundColor:'#b07cff',borderRadius:3}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});}
-
-  // Mensal
-  {const aD=aggSum(def,r=>`${r.ano}-${String(r.mes).padStart(2,'0')}`,r=>r.qInt);
-   const aP=aggSum(prod,r=>`${r.ano}-${String(r.mes).padStart(2,'0')}`,r=>r.qtd);
-   const keys=[...new Set([...aD.keys(),...aP.keys()])].sort();
-   makeChart('cOvMensal',{type:'line',data:{labels:keys,datasets:[{label:'Defeitos',data:keys.map(k=>aD.get(k)||0),borderColor:'#ff5b3a',backgroundColor:'rgba(255,91,58,.1)',tension:.25,yAxisID:'y',pointRadius:0},{label:'Produção (÷1000)',data:keys.map(k=>(aP.get(k)||0)/1000),borderColor:'#3ddc97',backgroundColor:'rgba(61,220,151,.1)',tension:.25,yAxisID:'y2',pointRadius:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{position:'left',title:{display:true,text:'Defeitos'}},y2:{position:'right',grid:{display:false},title:{display:true,text:'Produção (mil)'}}}}});}
-
-  // PPM mat
-  {const mats=[...new Set(state.producao.map(r=>r.material))].sort();
-   const ppms=mats.map(m=>{const d=totalDef(def.filter(r=>r.material===m));const p=totalProd(prod.filter(r=>r.material===m));return{m,ppm:ppm(d,p),nome:CONFIG.materiais[m]?.nome||m};});
-   makeChart('cOvMat',{type:'bar',data:{labels:ppms.map(r=>`${r.m} · ${r.nome}`),datasets:[{label:'PPM',data:ppms.map(r=>r.ppm),backgroundColor:ppms.map(r=>r.ppm<=meta?'#3ddc97':'#ff5b6e'),borderRadius:4},{type:'line',label:`Meta ${fmtPPM(meta)}`,data:ppms.map(()=>meta),borderColor:'#ffd166',borderWidth:2,borderDash:[6,4],pointRadius:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true,ticks:{callback:v=>fmtPPM(v)}}}}});}
+  makeChart('cOvCombo',{type:'bar',data:{labels:topComb.map(r=>r.lbl),datasets:[{data:topComb.map(r=>r.v),backgroundColor:'#ff5b3a',borderRadius:3}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+  {const aD=aggSum(def,r=>r.ano,r=>r.qInt),aP=aggSum(prod,r=>r.ano,r=>r.qtd);const anos=[...new Set([...aD.keys(),...aP.keys()])].sort();const rates=anos.map(a=>calcRate(aD.get(a)||0,aP.get(a)||0));makeChart('cOvPPM',{type:'bar',data:{labels:anos,datasets:[{label:sfx,data:rates,backgroundColor:rates.map(v=>v<=meta?'#3ddc97':'#ff5b6e'),borderRadius:4},{type:'line',label:`Meta ${fmtRate(meta)}`,data:anos.map(()=>meta),borderColor:'#ffd166',borderWidth:2,borderDash:[6,4],pointRadius:0,fill:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true}}}});}
+  {const a=aggSum(def,r=>r.dano,r=>r.qInt);const arr=[...a.entries()].map(([k,v])=>({k,lbl:`${k}·${(CONFIG.tipos_defeito[k]||k).substring(0,18)}`,v})).sort((a,b)=>b.v-a.v).slice(0,12);const total=arr.reduce((s,r)=>s+r.v,0);let acc=0;const cum=arr.map(r=>{acc+=r.v;return total?(acc/total*100):0;});makeChart('cOvPareto',{type:'bar',data:{labels:arr.map(r=>r.lbl),datasets:[{label:'Defeitos',data:arr.map(r=>r.v),backgroundColor:'#ff5b3a',borderRadius:3,yAxisID:'y'},{type:'line',label:'% Acum.',data:cum,borderColor:'#ffd166',borderWidth:2,pointRadius:3,yAxisID:'y2',tension:.2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true,position:'left'},y2:{beginAtZero:true,max:100,position:'right',grid:{display:false},ticks:{callback:v=>v+'%'}}}}});}
+  {const a=aggSum(def,r=>r.cliente,r=>r.qInt);const arr=[...a.entries()].map(([k,v])=>({lbl:(CONFIG.clientes[k]?.nome||`[${k}]`).substring(0,28),v})).sort((a,b)=>b.v-a.v).slice(0,10);makeChart('cOvCli',{type:'bar',data:{labels:arr.map(r=>r.lbl),datasets:[{data:arr.map(r=>r.v),backgroundColor:'#6cb6ff',borderRadius:3}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});}
+  {const a=aggSum(def,r=>r.consultor,r=>r.qInt);const arr=[...a.entries()].sort((a,b)=>b[1]-a[1]);makeChart('cOvCons',{type:'doughnut',data:{labels:arr.map(r=>r[0]),datasets:[{data:arr.map(r=>r[1]),backgroundColor:COLORS,borderColor:'#161a23',borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:10}}}}}});}
+  {const a=aggSum(def,r=>r.local,r=>r.qInt);const arr=[...a.entries()].map(([k,v])=>({lbl:(CONFIG.locais_defeito[k]||k).substring(0,22),v})).sort((a,b)=>b.v-a.v).slice(0,10);makeChart('cOvLocal',{type:'bar',data:{labels:arr.map(r=>r.lbl),datasets:[{data:arr.map(r=>r.v),backgroundColor:'#b07cff',borderRadius:3}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});}
+  {const aD=aggSum(def,r=>`${r.ano}-${String(r.mes).padStart(2,'0')}`,r=>r.qInt);const aP=aggSum(prod,r=>`${r.ano}-${String(r.mes).padStart(2,'0')}`,r=>r.qtd);const keys=[...new Set([...aD.keys(),...aP.keys()])].sort();makeChart('cOvMensal',{type:'line',data:{labels:keys,datasets:[{label:'Defeitos',data:keys.map(k=>aD.get(k)||0),borderColor:'#ff5b3a',backgroundColor:'rgba(255,91,58,.1)',tension:.25,yAxisID:'y',pointRadius:0},{label:'Produção (÷1000)',data:keys.map(k=>(aP.get(k)||0)/1000),borderColor:'#3ddc97',backgroundColor:'rgba(61,220,151,.1)',tension:.25,yAxisID:'y2',pointRadius:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{position:'left',title:{display:true,text:'Defeitos'}},y2:{position:'right',grid:{display:false},title:{display:true,text:'Produção (mil)'}}}}});}
+  {const mats=[...new Set(state.producao.map(r=>r.material))].filter(m=>CONFIG.materiais[m]?.visivel!==false).sort();const ppms=mats.map(m=>{const d=totalDef(def.filter(r=>r.material===m));const p=totalProd(prod.filter(r=>r.material===m));return{m,rate:calcRate(d,p),nome:CONFIG.materiais[m]?.nome||m};});makeChart('cOvMat',{type:'bar',data:{labels:ppms.map(r=>`${r.m}·${r.nome}`),datasets:[{label:sfx,data:ppms.map(r=>r.rate),backgroundColor:ppms.map(r=>r.rate<=meta?'#3ddc97':'#ff5b6e'),borderRadius:4},{type:'line',label:`Meta ${fmtRate(meta)}`,data:ppms.map(()=>meta),borderColor:'#ffd166',borderWidth:2,borderDash:[6,4],pointRadius:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true}}}});}
 }
 
-/* ============================================================
-   02 · DEFEITOS
-   ============================================================ */
+// ====================================================================
+//  02 · DEFEITOS
+// ====================================================================
 function renderDefects(){
-  const def=applyFilters(state.defeitos),prod=applyFilters(state.producao,true);
-  const meta = getMetaAjustada();
-  const aMes=aggSum(def,r=>`${r.ano}-${String(r.mes).padStart(2,'0')}`,r=>r.qInt);
-  const aMesP=aggSum(prod,r=>`${r.ano}-${String(r.mes).padStart(2,'0')}`,r=>r.qtd);
-  const mesKeys=[...new Set([...aMes.keys(),...aMesP.keys()])].sort();
-  const ppmMensal=mesKeys.map(k=>ppm(aMes.get(k)||0,aMesP.get(k)||0));
-  const aAno=aggSum(def,r=>r.ano,r=>r.qInt);
-  const anos=[...aAno.keys()].sort();
-
+  const def=applyFilters(state.defeitos),prod=applyFilters(state.producao,true);const meta=getMetaGlobal();const sfx=rateSuffix();
+  const aMes=aggSum(def,r=>`${r.ano}-${String(r.mes).padStart(2,'0')}`,r=>r.qInt);const aMesP=aggSum(prod,r=>`${r.ano}-${String(r.mes).padStart(2,'0')}`,r=>r.qtd);const mesKeys=[...new Set([...aMes.keys(),...aMesP.keys()])].sort();const ratesMensal=mesKeys.map(k=>calcRate(aMes.get(k)||0,aMesP.get(k)||0));const aAno=aggSum(def,r=>r.ano,r=>r.qInt);const anos=[...aAno.keys()].sort();
   document.getElementById('page-defects').innerHTML=`
-    <div class="grid grid-2">
-      <div class="card tall"><h3>PPM Mensal vs. Meta</h3><div class="desc">Linha tracejada = meta ${fmtPPM(meta)}</div><div class="canvas-wrap"><canvas id="cDefPPMMes"></canvas></div></div>
-      <div class="card tall"><h3>Defeitos por Ano</h3><div class="desc">Volume anual</div><div class="canvas-wrap"><canvas id="cDefAno"></canvas></div></div>
-    </div>
-    <div class="grid grid-2">
-      <div class="card tall"><h3>Comparativo Mensal por Ano</h3><div class="desc">Cada linha = um ano (útil com multi-seleção)</div><div class="canvas-wrap"><canvas id="cDefCompMes"></canvas></div></div>
-      <div class="card tall"><h3>Defeitos por Dia da Semana</h3><div class="desc">Padrão semanal</div><div class="canvas-wrap"><canvas id="cDefDow"></canvas></div></div>
-    </div>
-    <div class="grid grid-2">
-      <div class="card tall"><h3>Defeitos por Material</h3><div class="canvas-wrap"><canvas id="cDefMat"></canvas></div></div>
-      <div class="card tall"><h3>Heatmap Ano × Mês</h3><div class="desc">Mais escuro = mais defeitos</div><div id="heatmap" style="overflow-x:auto"></div></div>
-    </div>`;
-
-  makeChart('cDefPPMMes',{type:'line',data:{labels:mesKeys,datasets:[{label:'PPM',data:ppmMensal,borderColor:'#ff5b3a',backgroundColor:'rgba(255,91,58,.1)',tension:.2,fill:true,pointRadius:1},{label:`Meta ${fmtPPM(meta)}`,data:mesKeys.map(()=>meta),borderColor:'#ffd166',borderWidth:2,borderDash:[6,4],pointRadius:0,fill:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true,ticks:{callback:v=>fmtPPM(v)}}}}});
-
+    <div class="grid grid-2"><div class="card tall"><h3>${sfx} Mensal vs. Meta</h3><div class="canvas-wrap"><canvas id="cDefPPMMes"></canvas></div></div><div class="card tall"><h3>Defeitos por Ano</h3><div class="canvas-wrap"><canvas id="cDefAno"></canvas></div></div></div>
+    <div class="grid grid-2"><div class="card tall"><h3>Comparativo Mensal por Ano</h3><div class="desc">Cada linha = um ano</div><div class="canvas-wrap"><canvas id="cDefCompMes"></canvas></div></div><div class="card tall"><h3>Defeitos por Dia da Semana</h3><div class="canvas-wrap"><canvas id="cDefDow"></canvas></div></div></div>
+    <div class="grid grid-2"><div class="card tall"><h3>Defeitos por Material</h3><div class="canvas-wrap"><canvas id="cDefMat"></canvas></div></div><div class="card tall"><h3>Heatmap Ano × Mês</h3><div id="heatmap" style="overflow-x:auto"></div></div></div>`;
+  makeChart('cDefPPMMes',{type:'line',data:{labels:mesKeys,datasets:[{label:sfx,data:ratesMensal,borderColor:'#ff5b3a',backgroundColor:'rgba(255,91,58,.1)',tension:.2,fill:true,pointRadius:1},{label:`Meta ${fmtRate(meta)}`,data:mesKeys.map(()=>meta),borderColor:'#ffd166',borderWidth:2,borderDash:[6,4],pointRadius:0,fill:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true}}}});
   makeChart('cDefAno',{type:'bar',data:{labels:anos,datasets:[{label:'Defeitos',data:anos.map(a=>aAno.get(a)||0),backgroundColor:'#6cb6ff',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
-
-  // Comparativo mensal por ano (útil com multi-ano)
-  {const datasets = anos.map((a,i)=>{
-    const arr = new Array(12).fill(0);
-    def.filter(r=>r.ano===a).forEach(r=>arr[r.mes-1]+=r.qInt);
-    return {label:a, data:arr, borderColor:COLORS[i%COLORS.length], backgroundColor:COLORS[i%COLORS.length]+'22', tension:.25, pointRadius:2, borderWidth:2};
-  });
-   makeChart('cDefCompMes',{type:'line',data:{labels:MESES_NOME,datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}});}
-
-  {const dows=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];const arr=new Array(7).fill(0);def.forEach(r=>arr[r.data.getDay()]+=r.qInt);
-   makeChart('cDefDow',{type:'bar',data:{labels:dows,datasets:[{data:arr,backgroundColor:'#3ddc97',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});}
-
-  {const a=aggSum(def,r=>r.material,r=>r.qInt);const arr=[...a.entries()].sort((a,b)=>b[1]-a[1]);
-   makeChart('cDefMat',{type:'bar',data:{labels:arr.map(r=>CONFIG.materiais[r[0]]?`${r[0]} · ${CONFIG.materiais[r[0]].nome}`:r[0]),datasets:[{data:arr.map(r=>r[1]),backgroundColor:'#ff5b3a',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});}
-
-  {const matriz={};anos.forEach(a=>{matriz[a]=new Array(12).fill(0);});def.forEach(r=>matriz[r.ano][r.mes-1]+=r.qInt);
-   let max=0;anos.forEach(a=>matriz[a].forEach(v=>{if(v>max)max=v;}));
-   let html=`<table class="data" style="margin-top:6px"><thead><tr><th>Ano</th>${MESES_NOME.map(m=>`<th style="text-align:center">${m}</th>`).join('')}<th style="text-align:right">Total</th></tr></thead><tbody>`;
-   anos.forEach(a=>{const total=matriz[a].reduce((s,v)=>s+v,0);html+=`<tr><td><b>${a}</b></td>`;matriz[a].forEach(v=>{const op=max?(v/max):0;html+=`<td style="background:rgba(255,91,58,${0.05+op*0.85});text-align:center;font-family:'JetBrains Mono',monospace;font-size:11.5px">${v||''}</td>`;});html+=`<td class="num"><b>${fmtNum(total)}</b></td></tr>`;});
-   html+='</tbody></table>';document.getElementById('heatmap').innerHTML=html;}
+  {const datasets=anos.map((a,i)=>{const arr=new Array(12).fill(0);def.filter(r=>r.ano===a).forEach(r=>arr[r.mes-1]+=r.qInt);return{label:String(a),data:arr,borderColor:COLORS[i%COLORS.length],tension:.25,pointRadius:2,borderWidth:2};});makeChart('cDefCompMes',{type:'line',data:{labels:MESES_NOME,datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}});}
+  {const dows=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];const arr=new Array(7).fill(0);def.forEach(r=>arr[r.data.getDay()]+=r.qInt);makeChart('cDefDow',{type:'bar',data:{labels:dows,datasets:[{data:arr,backgroundColor:'#3ddc97',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});}
+  {const a=aggSum(def,r=>r.material,r=>r.qInt);const arr=[...a.entries()].sort((a,b)=>b[1]-a[1]);makeChart('cDefMat',{type:'bar',data:{labels:arr.map(r=>CONFIG.materiais[r[0]]?`${r[0]}·${CONFIG.materiais[r[0]].nome}`:r[0]),datasets:[{data:arr.map(r=>r[1]),backgroundColor:'#ff5b3a',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});}
+  {const matriz={};anos.forEach(a=>{matriz[a]=new Array(12).fill(0);});def.forEach(r=>{if(matriz[r.ano])matriz[r.ano][r.mes-1]+=r.qInt;});let max=0;anos.forEach(a=>matriz[a].forEach(v=>{if(v>max)max=v;}));let html=`<table class="data"><thead><tr><th>Ano</th>${MESES_NOME.map(m=>`<th style="text-align:center">${m}</th>`).join('')}<th style="text-align:right">Total</th></tr></thead><tbody>`;anos.forEach(a=>{const total=matriz[a].reduce((s,v)=>s+v,0);html+=`<tr><td><b>${a}</b></td>`;matriz[a].forEach(v=>{const op=max?(v/max):0;html+=`<td style="background:rgba(255,91,58,${0.05+op*0.85});text-align:center;font-family:'JetBrains Mono',monospace;font-size:11.5px">${v||''}</td>`;});html+=`<td class="num"><b>${fmtNum(total)}</b></td></tr>`;});html+='</tbody></table>';document.getElementById('heatmap').innerHTML=html;}
 }
 
-/* ============================================================
-   03 · CLIENTES
-   ============================================================ */
+// ====================================================================
+//  03 · CLIENTES
+// ====================================================================
 function renderClients(){
-  const def=applyFilters(state.defeitos);
-  const a=aggSum(def,r=>r.cliente,r=>r.qInt);
-  const arr=[...a.entries()].map(([k,v])=>{
-    const ds=def.filter(r=>r.cliente===k);
-    const tempo=ds.filter(r=>r.diasFech!=null&&r.diasFech>=0).map(r=>r.diasFech);
-    return{cli:k,nome:CONFIG.clientes[k]?.nome||`[${k}]`,cons:CONFIG.clientes[k]?.consultor||'Não mapeado',v,notas:new Set(ds.map(r=>r.nota)).size,tempo:tempo.length?tempo.reduce((a,b)=>a+b,0)/tempo.length:null};
-  }).sort((a,b)=>b.v-a.v);
-  const total=arr.reduce((s,r)=>s+r.v,0);
-  const max=arr[0]?.v||1;
-  const top20=arr.slice(0,20);
-
+  const def=applyFilters(state.defeitos);const a=aggSum(def,r=>r.cliente,r=>r.qInt);
+  const arr=[...a.entries()].map(([k,v])=>{const ds=def.filter(r=>r.cliente===k);const tempo=ds.filter(r=>r.diasFech!=null&&r.diasFech>=0).map(r=>r.diasFech);return{cli:k,nome:CONFIG.clientes[k]?.nome||`[${k}]`,cons:CONFIG.clientes[k]?.consultor||'Não mapeado',v,notas:new Set(ds.map(r=>r.nota)).size,tempo:tempo.length?tempo.reduce((a,b)=>a+b,0)/tempo.length:null};}).sort((a,b)=>b.v-a.v);
+  const total=arr.reduce((s,r)=>s+r.v,0);const max=arr[0]?.v||1;const top20=arr.slice(0,20);
   document.getElementById('page-clients').innerHTML=`
-    <div class="kpis">
-      <div class="kpi info"><div class="lbl">Clientes c/ defeitos</div><div class="val">${fmtNum(arr.length)}</div></div>
-      <div class="kpi"><div class="lbl">Top 1</div><div class="val" style="font-size:16px;line-height:1.4">${(arr[0]?.nome||'-').substring(0,28)}</div><div class="sub">${fmtNum(arr[0]?.v||0)} defeitos</div></div>
-      <div class="kpi"><div class="lbl">Top 5 = % do total</div><div class="val">${total?fmtDec(arr.slice(0,5).reduce((s,r)=>s+r.v,0)/total*100,1):0}%</div></div>
-      <div class="kpi"><div class="lbl">Top 10 = % do total</div><div class="val">${total?fmtDec(arr.slice(0,10).reduce((s,r)=>s+r.v,0)/total*100,1):0}%</div></div>
-    </div>
-    <div class="grid grid-2">
-      <div class="card tall"><h3>Top 20 Clientes (Defeitos)</h3><div class="canvas-wrap"><canvas id="cCliTop"></canvas></div></div>
-      <div class="card tall"><h3>Tendência · Top 5 Clientes</h3><div class="desc">Defeitos por mês</div><div class="canvas-wrap"><canvas id="cCliTrend"></canvas></div></div>
-    </div>
-    <div class="card"><h3>Ranking Completo de Clientes</h3><div class="desc">Tempo = média de dias entre abertura e fechamento.</div>
-      <div class="scroll-y"><table class="data"><thead><tr><th>#</th><th>Código</th><th>Cliente</th><th>Consultor</th><th>Notas</th><th>Defeitos</th><th>Tempo (dias)</th></tr></thead><tbody>
-      ${arr.map((r,i)=>`<tr><td class="num">${i+1}</td><td><code style="color:#8b93a7">${r.cli}</code></td><td class="bar-cell"><div class="bar" style="width:${r.v/max*100}%"></div><span class="lbl">${r.nome}</span></td><td>${r.cons}</td><td class="num">${fmtNum(r.notas)}</td><td class="num"><b>${fmtNum(r.v)}</b></td><td class="num">${r.tempo!=null?fmtDec(r.tempo,1):'—'}</td></tr>`).join('')}
-      </tbody></table></div></div>`;
-
+    <div class="kpis"><div class="kpi info"><div class="lbl">Clientes c/ defeitos</div><div class="val">${fmtNum(arr.length)}</div></div><div class="kpi"><div class="lbl">Top 1</div><div class="val" style="font-size:16px;line-height:1.4">${(arr[0]?.nome||'-').substring(0,28)}</div><div class="sub">${fmtNum(arr[0]?.v||0)} def.</div></div><div class="kpi"><div class="lbl">Top 5 = %</div><div class="val">${total?fmtDec(arr.slice(0,5).reduce((s,r)=>s+r.v,0)/total*100,1):0}%</div></div><div class="kpi"><div class="lbl">Top 10 = %</div><div class="val">${total?fmtDec(arr.slice(0,10).reduce((s,r)=>s+r.v,0)/total*100,1):0}%</div></div></div>
+    <div class="grid grid-2"><div class="card tall"><h3>Top 20 Clientes</h3><div class="canvas-wrap"><canvas id="cCliTop"></canvas></div></div><div class="card tall"><h3>Tendência Top 5</h3><div class="canvas-wrap"><canvas id="cCliTrend"></canvas></div></div></div>
+    <div class="card"><h3>Ranking Completo</h3><div class="scroll-y"><table class="data"><thead><tr><th>#</th><th>Cód.</th><th>Cliente</th><th>Consultor</th><th>Notas</th><th>Defeitos</th><th>Tempo (dias)</th></tr></thead><tbody>${arr.map((r,i)=>`<tr><td class="num">${i+1}</td><td><code>${r.cli}</code></td><td class="bar-cell"><div class="bar" style="width:${r.v/max*100}%"></div><span class="lbl">${r.nome}</span></td><td>${r.cons}</td><td class="num">${fmtNum(r.notas)}</td><td class="num"><b>${fmtNum(r.v)}</b></td><td class="num">${r.tempo!=null?fmtDec(r.tempo,1):'—'}</td></tr>`).join('')}</tbody></table></div></div>`;
   makeChart('cCliTop',{type:'bar',data:{labels:top20.map(r=>r.nome.substring(0,30)),datasets:[{data:top20.map(r=>r.v),backgroundColor:'#6cb6ff',borderRadius:3}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
-  {const top5=arr.slice(0,5);const meses=[...new Set(def.map(r=>`${r.ano}-${String(r.mes).padStart(2,'0')}`))].sort();
-   const datasets=top5.map((c,i)=>{const d=aggSum(def.filter(r=>r.cliente===c.cli),r=>`${r.ano}-${String(r.mes).padStart(2,'0')}`,r=>r.qInt);return{label:c.nome.substring(0,20),data:meses.map(m=>d.get(m)||0),borderColor:COLORS[i],backgroundColor:COLORS[i]+'33',tension:.25,pointRadius:0};});
-   makeChart('cCliTrend',{type:'line',data:{labels:meses,datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:10}}}}}});}
+  {const top5=arr.slice(0,5);const meses=[...new Set(def.map(r=>`${r.ano}-${String(r.mes).padStart(2,'0')}`))].sort();const datasets=top5.map((c,i)=>{const d=aggSum(def.filter(r=>r.cliente===c.cli),r=>`${r.ano}-${String(r.mes).padStart(2,'0')}`,r=>r.qInt);return{label:c.nome.substring(0,20),data:meses.map(m=>d.get(m)||0),borderColor:COLORS[i],tension:.25,pointRadius:0};});makeChart('cCliTrend',{type:'line',data:{labels:meses,datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:10}}}}}});}
 }
 
-/* ============================================================
-   04 · CONSULTORES
-   ============================================================ */
+// ====================================================================
+//  04 · CONSULTORES
+// ====================================================================
 function renderConsultants(){
-  const def=applyFilters(state.defeitos);
-  const a=aggSum(def,r=>r.consultor,r=>r.qInt);
-  const arr=[...a.entries()].map(([k,v])=>{
-    const ds=def.filter(r=>r.consultor===k);
-    const tempo=ds.filter(r=>r.diasFech!=null&&r.diasFech>=0).map(r=>r.diasFech);
-    return{nome:k,v,clis:new Set(ds.map(r=>r.cliente)).size,notas:new Set(ds.map(r=>r.nota)).size,tempo:tempo.length?tempo.reduce((a,b)=>a+b,0)/tempo.length:null};
-  }).sort((a,b)=>b.v-a.v);
-
+  const def=applyFilters(state.defeitos);const a=aggSum(def,r=>r.consultor,r=>r.qInt);
+  const arr=[...a.entries()].map(([k,v])=>{const ds=def.filter(r=>r.consultor===k);const tempo=ds.filter(r=>r.diasFech!=null&&r.diasFech>=0).map(r=>r.diasFech);return{nome:k,v,clis:new Set(ds.map(r=>r.cliente)).size,notas:new Set(ds.map(r=>r.nota)).size,tempo:tempo.length?tempo.reduce((a,b)=>a+b,0)/tempo.length:null};}).sort((a,b)=>b.v-a.v);
   document.getElementById('page-consultants').innerHTML=`
-    <div class="kpis">
-      <div class="kpi info"><div class="lbl">Consultores ativos</div><div class="val">${fmtNum(arr.length)}</div></div>
-      <div class="kpi"><div class="lbl">Maior carteira</div><div class="val" style="font-size:16px;line-height:1.4">${(arr[0]?.nome||'-').substring(0,24)}</div><div class="sub">${fmtNum(arr[0]?.v||0)} defeitos</div></div>
-      <div class="kpi warn"><div class="lbl">Média defeitos/consultor</div><div class="val">${arr.length?fmtNum(arr.reduce((s,r)=>s+r.v,0)/arr.length):0}</div></div>
-    </div>
-    <div class="grid grid-2">
-      <div class="card tall"><h3>Defeitos por Consultor</h3><div class="canvas-wrap"><canvas id="cConsBar"></canvas></div></div>
-      <div class="card tall"><h3>Tipos de Defeito por Consultor</h3><div class="desc">Top 8 tipos · empilhado</div><div class="canvas-wrap"><canvas id="cConsStack"></canvas></div></div>
-    </div>
-    <div class="card"><h3>Tabela · Performance dos Consultores</h3>
-      <table class="data"><thead><tr><th>Consultor</th><th>Clientes</th><th>Notas</th><th>Defeitos</th><th>Tempo médio (dias)</th></tr></thead><tbody>
-      ${arr.map(r=>`<tr><td><b>${r.nome}</b></td><td class="num">${fmtNum(r.clis)}</td><td class="num">${fmtNum(r.notas)}</td><td class="num"><b>${fmtNum(r.v)}</b></td><td class="num">${r.tempo!=null?fmtDec(r.tempo,1):'—'}</td></tr>`).join('')}
-      </tbody></table></div>`;
-
+    <div class="kpis"><div class="kpi info"><div class="lbl">Consultores ativos</div><div class="val">${fmtNum(arr.length)}</div></div><div class="kpi"><div class="lbl">Maior carteira</div><div class="val" style="font-size:16px;line-height:1.4">${(arr[0]?.nome||'-').substring(0,24)}</div><div class="sub">${fmtNum(arr[0]?.v||0)} def.</div></div><div class="kpi warn"><div class="lbl">Média def./consultor</div><div class="val">${arr.length?fmtNum(arr.reduce((s,r)=>s+r.v,0)/arr.length):0}</div></div></div>
+    <div class="grid grid-2"><div class="card tall"><h3>Defeitos por Consultor</h3><div class="canvas-wrap"><canvas id="cConsBar"></canvas></div></div><div class="card tall"><h3>Tipos de Defeito por Consultor</h3><div class="desc">Top 8 tipos · empilhado</div><div class="canvas-wrap"><canvas id="cConsStack"></canvas></div></div></div>
+    <div class="card"><h3>Tabela de Performance</h3><table class="data"><thead><tr><th>Consultor</th><th>Clientes</th><th>Notas</th><th>Defeitos</th><th>Tempo (dias)</th></tr></thead><tbody>${arr.map(r=>`<tr><td><b>${r.nome}</b></td><td class="num">${fmtNum(r.clis)}</td><td class="num">${fmtNum(r.notas)}</td><td class="num"><b>${fmtNum(r.v)}</b></td><td class="num">${r.tempo!=null?fmtDec(r.tempo,1):'—'}</td></tr>`).join('')}</tbody></table></div>`;
   makeChart('cConsBar',{type:'bar',data:{labels:arr.map(r=>r.nome.split(' ').slice(0,2).join(' ')),datasets:[{data:arr.map(r=>r.v),backgroundColor:COLORS,borderRadius:4}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
-
-  {const tipos=[...aggSum(def,r=>r.dano,r=>r.qInt).entries()].sort((a,b)=>b[1]-a[1]).slice(0,8).map(r=>r[0]);
-   const conss=arr.map(r=>r.nome);
-   const datasets=tipos.map((t,i)=>({label:`${t}·${(CONFIG.tipos_defeito[t]||t).substring(0,16)}`,data:conss.map(c=>def.filter(r=>r.consultor===c&&r.dano===t).reduce((s,r)=>s+r.qInt,0)),backgroundColor:COLORS[i]}));
-   makeChart('cConsStack',{type:'bar',data:{labels:conss.map(n=>n.split(' ').slice(0,2).join(' ')),datasets},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,scales:{x:{stacked:true},y:{stacked:true}},plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:10}}}}}});}
+  {const tipos=[...aggSum(def,r=>r.dano,r=>r.qInt).entries()].sort((a,b)=>b[1]-a[1]).slice(0,8).map(r=>r[0]);const conss=arr.map(r=>r.nome);const datasets=tipos.map((t,i)=>({label:`${t}·${(CONFIG.tipos_defeito[t]||t).substring(0,16)}`,data:conss.map(c=>def.filter(r=>r.consultor===c&&r.dano===t).reduce((s,r)=>s+r.qInt,0)),backgroundColor:COLORS[i]}));makeChart('cConsStack',{type:'bar',data:{labels:conss.map(n=>n.split(' ').slice(0,2).join(' ')),datasets},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,scales:{x:{stacked:true},y:{stacked:true}},plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:10}}}}}});}
 }
 
-/* ============================================================
-   05 · TIPOS & LOCAIS
-   ============================================================ */
+// ====================================================================
+//  05 · TIPOS & LOCAIS
+// ====================================================================
 function renderTypes(){
   const def=applyFilters(state.defeitos);
-
-  // COMBINADO em destaque no topo
-  const aComb=aggSum(def, r=>`${r.dano}||${r.local}`, r=>r.qInt);
-  const combArr=[...aComb.entries()].map(([k,v])=>{
-    const [d,l]=k.split('||');
-    return {d,l,v,dNome:CONFIG.tipos_defeito[d]||d,lNome:CONFIG.locais_defeito[l]||l};
-  }).sort((a,b)=>b.v-a.v);
-  const totalComb=combArr.reduce((s,r)=>s+r.v,0);
-
-  const aT=aggSum(def,r=>r.dano,r=>r.qInt);
-  const tipos=[...aT.entries()].map(([k,v])=>({k,nome:CONFIG.tipos_defeito[k]||k,v})).sort((a,b)=>b.v-a.v);
-  const aL=aggSum(def,r=>r.local,r=>r.qInt);
-  const locais=[...aL.entries()].map(([k,v])=>({k,nome:CONFIG.locais_defeito[k]||k,v})).sort((a,b)=>b.v-a.v);
+  const aComb=aggSum(def,r=>`${r.dano}||${r.local}`,r=>r.qInt);const combArr=[...aComb.entries()].map(([k,v])=>{const[d,l]=k.split('||');return{d,l,v,dNome:CONFIG.tipos_defeito[d]||d,lNome:CONFIG.locais_defeito[l]||l};}).sort((a,b)=>b.v-a.v);const totalComb=combArr.reduce((s,r)=>s+r.v,0);
+  const aT=aggSum(def,r=>r.dano,r=>r.qInt);const tipos=[...aT.entries()].map(([k,v])=>({k,nome:CONFIG.tipos_defeito[k]||k,v})).sort((a,b)=>b.v-a.v);
+  const aL=aggSum(def,r=>r.local,r=>r.qInt);const locais=[...aL.entries()].map(([k,v])=>({k,nome:CONFIG.locais_defeito[k]||k,v})).sort((a,b)=>b.v-a.v);
 
   document.getElementById('page-types').innerHTML=`
-    <div class="card featured">
-      <h3>★ Combinação Tipo + Local</h3>
-      <div class="desc">Análise cruzada — defeito de um tipo específico em um local específico (${combArr.length} combinações distintas)</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-        <div style="height:420px;position:relative"><canvas id="cTipComb"></canvas></div>
-        <div class="scroll-y" style="max-height:420px"><table class="data"><thead><tr><th>Tipo</th><th>Local</th><th>Defeitos</th><th>%</th></tr></thead><tbody>
-        ${combArr.slice(0,50).map(r=>`<tr><td><code>${r.d}</code> · ${r.dNome}</td><td><code>${r.l}</code> · ${r.lNome}</td><td class="num"><b>${fmtNum(r.v)}</b></td><td class="num">${fmtDec(totalComb?r.v/totalComb*100:0,1)}%</td></tr>`).join('')}
-        </tbody></table></div>
+    <div class="card featured"><h3>★ Combinação Tipo + Local</h3><div class="desc">${combArr.length} combinações distintas</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+        <div style="height:440px;position:relative"><canvas id="cTipComb"></canvas></div>
+        <div class="scroll-y" style="max-height:440px"><table class="data"><thead><tr><th>Tipo</th><th>Local</th><th>Qtd</th><th>%</th></tr></thead><tbody>${combArr.slice(0,50).map(r=>`<tr><td><code>${r.d}</code> ${r.dNome}</td><td><code>${r.l}</code> ${r.lNome}</td><td class="num"><b>${fmtNum(r.v)}</b></td><td class="num">${fmtDec(totalComb?r.v/totalComb*100:0,1)}%</td></tr>`).join('')}</tbody></table></div>
       </div>
     </div>
-
-    <div class="grid grid-2">
-      <div class="card tall"><h3>Ranking · Tipos de Defeito</h3><div class="desc">${tipos.length} tipos identificados</div><div class="canvas-wrap"><canvas id="cTipTipos"></canvas></div></div>
-      <div class="card tall"><h3>Ranking · Locais do Defeito</h3><div class="desc">${locais.length} locais identificados</div><div class="canvas-wrap"><canvas id="cTipLocais"></canvas></div></div>
+    <div class="grid grid-2" style="margin-top:18px">
+      <div class="card tall"><h3>Ranking Tipos</h3><div class="canvas-wrap"><canvas id="cTipTipos"></canvas></div></div>
+      <div class="card tall"><h3>Ranking Locais</h3><div class="canvas-wrap"><canvas id="cTipLocais"></canvas></div></div>
     </div>
+    <div class="card"><h3>Matriz Tipo × Local (heatmap)</h3><div id="matriz" style="overflow-x:auto;margin-top:8px"></div></div>`;
 
-    <div class="card"><h3>Matriz · Tipo × Local (heatmap)</h3>
-      <div class="desc">Cruzamento dos top 10 tipos com top 8 locais</div>
-      <div id="matriz" style="overflow-x:auto"></div>
-    </div>
-
-    <div class="grid grid-2">
-      <div class="card"><h3>Todos os Tipos</h3>
-        <div class="scroll-y"><table class="data"><thead><tr><th>Cód.</th><th>Tipo</th><th>Defeitos</th><th>%</th></tr></thead><tbody>
-        ${tipos.map(r=>{const tot=tipos.reduce((s,x)=>s+x.v,0);return`<tr><td><code>${r.k}</code></td><td>${r.nome}</td><td class="num">${fmtNum(r.v)}</td><td class="num">${fmtDec(tot?r.v/tot*100:0,1)}%</td></tr>`}).join('')}
-        </tbody></table></div></div>
-      <div class="card"><h3>Todos os Locais</h3>
-        <div class="scroll-y"><table class="data"><thead><tr><th>Cód.</th><th>Local</th><th>Defeitos</th><th>%</th></tr></thead><tbody>
-        ${locais.map(r=>{const tot=locais.reduce((s,x)=>s+x.v,0);return`<tr><td><code>${r.k}</code></td><td>${r.nome}</td><td class="num">${fmtNum(r.v)}</td><td class="num">${fmtDec(tot?r.v/tot*100:0,1)}%</td></tr>`}).join('')}
-        </tbody></table></div></div>
-    </div>`;
-
-  // combinado gráfico top 15
   makeChart('cTipComb',{type:'bar',data:{labels:combArr.slice(0,15).map(r=>`${r.d}×${r.l}`),datasets:[{data:combArr.slice(0,15).map(r=>r.v),backgroundColor:'#ff5b3a',borderRadius:3}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{title:c=>{const r=combArr[c[0].dataIndex];return `${r.d}·${r.dNome}\n${r.l}·${r.lNome}`;},label:c=>`${fmtNum(c.parsed.x)} defeitos`}}}}});
+  makeChart('cTipTipos',{type:'bar',data:{labels:tipos.slice(0,15).map(r=>`${r.k}·${r.nome.substring(0,22)}`),datasets:[{data:tipos.slice(0,15).map(r=>r.v),backgroundColor:'#ff5b3a',borderRadius:3}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+  makeChart('cTipLocais',{type:'bar',data:{labels:locais.slice(0,15).map(r=>`${r.k}·${r.nome.substring(0,22)}`),datasets:[{data:locais.slice(0,15).map(r=>r.v),backgroundColor:'#b07cff',borderRadius:3}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
 
-  makeChart('cTipTipos',{type:'bar',data:{labels:tipos.slice(0,15).map(r=>`${r.k} · ${r.nome.substring(0,22)}`),datasets:[{data:tipos.slice(0,15).map(r=>r.v),backgroundColor:'#ff5b3a',borderRadius:3}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
-  makeChart('cTipLocais',{type:'bar',data:{labels:locais.slice(0,15).map(r=>`${r.k} · ${r.nome.substring(0,22)}`),datasets:[{data:locais.slice(0,15).map(r=>r.v),backgroundColor:'#b07cff',borderRadius:3}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
-
-  // matriz heatmap
-  {const topT=tipos.slice(0,10),topL=locais.slice(0,8);
-   const m={};topT.forEach(t=>{m[t.k]={};topL.forEach(l=>m[t.k][l.k]=0);});
-   def.forEach(r=>{if(m[r.dano]&&m[r.dano][r.local]!==undefined)m[r.dano][r.local]+=r.qInt;});
-   let max=0;topT.forEach(t=>topL.forEach(l=>{if(m[t.k][l.k]>max)max=m[t.k][l.k];}));
-   let html=`<table class="data" style="margin-top:6px"><thead><tr><th>Tipo \\ Local</th>${topL.map(l=>`<th style="text-align:center" title="${l.nome}">${l.k}</th>`).join('')}<th style="text-align:right">Total</th></tr></thead><tbody>`;
-   topT.forEach(t=>{const total=topL.reduce((s,l)=>s+m[t.k][l.k],0);html+=`<tr><td><b>${t.k}</b> · ${t.nome}</td>`;topL.forEach(l=>{const v=m[t.k][l.k];const op=max?v/max:0;html+=`<td style="background:rgba(255,209,102,${0.05+op*0.8});text-align:center;font-family:'JetBrains Mono',monospace;font-size:11.5px">${v||''}</td>`;});html+=`<td class="num"><b>${fmtNum(total)}</b></td></tr>`;});
-   html+='</tbody></table>';document.getElementById('matriz').innerHTML=html;}
+  {const topT=tipos.slice(0,10),topL=locais.slice(0,8);const m={};topT.forEach(t=>{m[t.k]={};topL.forEach(l=>m[t.k][l.k]=0);});def.forEach(r=>{if(m[r.dano]&&m[r.dano][r.local]!==undefined)m[r.dano][r.local]+=r.qInt;});let max=0;topT.forEach(t=>topL.forEach(l=>{if(m[t.k][l.k]>max)max=m[t.k][l.k];}));let html=`<table class="data"><thead><tr><th>Tipo \\ Local</th>${topL.map(l=>`<th style="text-align:center" title="${l.nome}">${l.k}</th>`).join('')}<th style="text-align:right">Total</th></tr></thead><tbody>`;topT.forEach(t=>{const total=topL.reduce((s,l)=>s+m[t.k][l.k],0);html+=`<tr><td><b>${t.k}</b> ${t.nome}</td>`;topL.forEach(l=>{const v=m[t.k][l.k];const op=max?v/max:0;html+=`<td style="background:rgba(255,209,102,${0.05+op*0.8});text-align:center;font-family:'JetBrains Mono',monospace;font-size:11.5px">${v||''}</td>`;});html+=`<td class="num"><b>${fmtNum(total)}</b></td></tr>`;});html+='</tbody></table>';document.getElementById('matriz').innerHTML=html;}
 }
 
-/* ============================================================
-   06 · TENDÊNCIAS
-   ============================================================ */
+// ====================================================================
+//  06 · TENDÊNCIAS
+// ====================================================================
 function renderTrends(){
-  const def=applyFilters(state.defeitos),prod=applyFilters(state.producao,true);
-  const meta = getMetaAjustada();
-  const aMes=aggSum(def,r=>`${r.ano}-${String(r.mes).padStart(2,'0')}`,r=>r.qInt);
-  const aMesP=aggSum(prod,r=>`${r.ano}-${String(r.mes).padStart(2,'0')}`,r=>r.qtd);
-  const keys=[...new Set([...aMes.keys(),...aMesP.keys()])].sort();
-  const ppmM=keys.map(k=>ppm(aMes.get(k)||0,aMesP.get(k)||0));
-  const mov3=ppmM.map((_,i)=>{const start=Math.max(0,i-2);const slice=ppmM.slice(start,i+1);return slice.reduce((a,b)=>a+b,0)/slice.length;});
-  const aAno=aggSum(def,r=>r.ano,r=>r.qInt);
-  const aAnoP=aggSum(prod,r=>r.ano,r=>r.qtd);
-  const anos=[...new Set([...aAno.keys(),...aAnoP.keys()])].sort();
-  const ppmAno=anos.map(a=>ppm(aAno.get(a)||0,aAnoP.get(a)||0));
+  const def=applyFilters(state.defeitos),prod=applyFilters(state.producao,true);const meta=getMetaGlobal();const sfx=rateSuffix();
+  const aMes=aggSum(def,r=>`${r.ano}-${String(r.mes).padStart(2,'0')}`,r=>r.qInt);const aMesP=aggSum(prod,r=>`${r.ano}-${String(r.mes).padStart(2,'0')}`,r=>r.qtd);const keys=[...new Set([...aMes.keys(),...aMesP.keys()])].sort();
+  const rateM=keys.map(k=>calcRate(aMes.get(k)||0,aMesP.get(k)||0));const mov3=rateM.map((_,i)=>{const start=Math.max(0,i-2);const slice=rateM.slice(start,i+1);return slice.reduce((a,b)=>a+b,0)/slice.length;});
+  const aAno=aggSum(def,r=>r.ano,r=>r.qInt);const aAnoP=aggSum(prod,r=>r.ano,r=>r.qtd);const anos=[...new Set([...aAno.keys(),...aAnoP.keys()])].sort();const rateAno=anos.map(a=>calcRate(aAno.get(a)||0,aAnoP.get(a)||0));
   const topTipos=[...aggSum(def,r=>r.dano,r=>r.qInt).entries()].sort((a,b)=>b[1]-a[1]).slice(0,5).map(r=>r[0]);
 
   document.getElementById('page-trends').innerHTML=`
-    <div class="grid grid-2">
-      <div class="card tall"><h3>PPM Mensal · média móvel 3M</h3><div class="desc">Linha clara = mês · Linha forte = tendência</div><div class="canvas-wrap"><canvas id="cTrPPMmm"></canvas></div></div>
-      <div class="card tall"><h3>Variação YoY · PPM</h3><div class="desc">Ano vs. ano (%)</div><div class="canvas-wrap"><canvas id="cTrYoY"></canvas></div></div>
-    </div>
-    <div class="grid grid-2">
-      <div class="card tall"><h3>Tendência dos 5 Principais Tipos</h3><div class="desc">Evolução mensal</div><div class="canvas-wrap"><canvas id="cTrTipos"></canvas></div></div>
-      <div class="card tall"><h3>Defeitos Acumulados</h3><div class="desc">Curva acumulada</div><div class="canvas-wrap"><canvas id="cTrAcc"></canvas></div></div>
-    </div>`;
+    <div class="grid grid-2"><div class="card tall"><h3>${sfx} Mensal · média móvel 3M</h3><div class="canvas-wrap"><canvas id="cTrPPMmm"></canvas></div></div><div class="card tall"><h3>Variação YoY · ${sfx}</h3><div class="canvas-wrap"><canvas id="cTrYoY"></canvas></div></div></div>
+    <div class="grid grid-2"><div class="card tall"><h3>Tendência Top 5 Tipos</h3><div class="canvas-wrap"><canvas id="cTrTipos"></canvas></div></div><div class="card tall"><h3>Defeitos Acumulados</h3><div class="canvas-wrap"><canvas id="cTrAcc"></canvas></div></div></div>`;
 
-  makeChart('cTrPPMmm',{type:'line',data:{labels:keys,datasets:[{label:'PPM mensal',data:ppmM,borderColor:'rgba(108,182,255,.4)',backgroundColor:'transparent',tension:.2,pointRadius:0,borderWidth:1.5},{label:'Média móvel 3M',data:mov3,borderColor:'#ff5b3a',tension:.3,pointRadius:0,borderWidth:2.5},{label:`Meta ${fmtPPM(meta)}`,data:keys.map(()=>meta),borderColor:'#ffd166',borderDash:[6,4],borderWidth:2,pointRadius:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true,ticks:{callback:v=>fmtPPM(v)}}}}});
-
-  {const variacao=ppmAno.map((v,i)=>i===0?0:(ppmAno[i-1]>0?(v-ppmAno[i-1])/ppmAno[i-1]*100:0));
-   makeChart('cTrYoY',{type:'bar',data:{labels:anos,datasets:[{data:variacao,backgroundColor:variacao.map(v=>v<=0?'#3ddc97':'#ff5b6e'),borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${fmtDec(c.parsed.y,1)}%`}}},scales:{y:{ticks:{callback:v=>v+'%'}}}}});}
-
-  {const datasets=topTipos.map((t,i)=>{const d=aggSum(def.filter(r=>r.dano===t),r=>`${r.ano}-${String(r.mes).padStart(2,'0')}`,r=>r.qInt);return{label:`${t}·${(CONFIG.tipos_defeito[t]||t).substring(0,16)}`,data:keys.map(k=>d.get(k)||0),borderColor:COLORS[i],backgroundColor:COLORS[i]+'22',tension:.25,pointRadius:0,fill:false};});
-   makeChart('cTrTipos',{type:'line',data:{labels:keys,datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:10}}}}}});}
-
-  {let acc=0;const data=keys.map(k=>{acc+=aMes.get(k)||0;return acc;});
-   makeChart('cTrAcc',{type:'line',data:{labels:keys,datasets:[{label:'Defeitos acumulados',data,borderColor:'#b07cff',backgroundColor:'rgba(176,124,255,.15)',tension:.2,fill:true,pointRadius:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});}
+  makeChart('cTrPPMmm',{type:'line',data:{labels:keys,datasets:[{label:`${sfx} mensal`,data:rateM,borderColor:'rgba(108,182,255,.4)',backgroundColor:'transparent',tension:.2,pointRadius:0,borderWidth:1.5},{label:'Média móvel 3M',data:mov3,borderColor:'#ff5b3a',tension:.3,pointRadius:0,borderWidth:2.5},{label:`Meta ${fmtRate(meta)}`,data:keys.map(()=>meta),borderColor:'#ffd166',borderDash:[6,4],borderWidth:2,pointRadius:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true}}}});
+  {const variacao=rateAno.map((v,i)=>i===0?0:(rateAno[i-1]>0?(v-rateAno[i-1])/rateAno[i-1]*100:0));makeChart('cTrYoY',{type:'bar',data:{labels:anos,datasets:[{data:variacao,backgroundColor:variacao.map(v=>v<=0?'#3ddc97':'#ff5b6e'),borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${fmtDec(c.parsed.y,1)}%`}}},scales:{y:{ticks:{callback:v=>v+'%'}}}}});}
+  {const datasets=topTipos.map((t,i)=>{const d=aggSum(def.filter(r=>r.dano===t),r=>`${r.ano}-${String(r.mes).padStart(2,'0')}`,r=>r.qInt);return{label:`${t}·${(CONFIG.tipos_defeito[t]||t).substring(0,16)}`,data:keys.map(k=>d.get(k)||0),borderColor:COLORS[i],tension:.25,pointRadius:0,fill:false};});makeChart('cTrTipos',{type:'line',data:{labels:keys,datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:10}}}}}});}
+  {let acc=0;const data=keys.map(k=>{acc+=aMes.get(k)||0;return acc;});makeChart('cTrAcc',{type:'line',data:{labels:keys,datasets:[{label:'Acumulado',data,borderColor:'#b07cff',backgroundColor:'rgba(176,124,255,.15)',tension:.2,fill:true,pointRadius:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});}
 }
 
-/* ============================================================
-   07 · AJUSTES / CONFIGURAÇÕES
-   ============================================================ */
+// ====================================================================
+//  07 · GUIA
+// ====================================================================
+function renderGuide(){
+  document.getElementById('page-guide').innerHTML=`
+  <div class="guide-section"><h3>📖 Guia de Uso do Quality·Dash</h3>
+    <h4>1. Carregar dados</h4>
+    <p>Clique nos botões <code>Carregar Defeitos</code> e <code>Carregar Produção</code> no topo. Aceita <b>múltiplos arquivos</b> — novos dados são somados ao existente e duplicatas são ignoradas automaticamente (chave: Nota+Item para defeitos, Material+Data+Qtd+Tipo para produção).</p>
+    <p>Use o botão <b>↻</b> para recarregar/adicionar novos arquivos a qualquer momento.</p>
+    <h4>2. Filtros</h4>
+    <p><b>Anos:</b> clique nos chips para selecionar/desmarcar. Permite comparar anos específicos.<br><b>Mês / Material / Consultor / Cliente:</b> dropdown com opção "Todos".<br><b>Indicador:</b> alterne entre PPM (partes por milhão), ‰ (por mil), % (percentual), cp100 (por 100 unidades).</p>
+    <h4>3. Abas</h4>
+    <p><b>01 Visão Geral:</b> KPIs macro, gráfico de combinação Tipo×Local, PPM por ano, Pareto, top clientes, consultores, locais, evolução mensal, PPM por material.<br>
+    <b>02 Defeitos:</b> PPM mensal, heatmap ano×mês, sazonalidade, dia da semana, comparativo anual.<br>
+    <b>03 Clientes:</b> ranking completo, top 20, tendência top 5, tempo médio de encerramento.<br>
+    <b>04 Consultores:</b> performance, tipos de defeito empilhados por consultor.<br>
+    <b>05 Tipos &amp; Locais:</b> combinação Tipo+Local em destaque, rankings individuais, heatmap cruzado.<br>
+    <b>06 Tendências:</b> média móvel, variação YoY, tendência top 5 tipos, curva acumulada.</p>
+    <h4>4. Glossário de termos</h4>
+    <p><b>PPM</b> — Partes Por Milhão = (defeitos ÷ produção) × 1.000.000. Métrica padrão da qualidade.<br>
+    <b>‰ (permil)</b> — Taxa por mil = (defeitos ÷ produção) × 1.000.<br>
+    <b>% (percentual)</b> — (defeitos ÷ produção) × 100.<br>
+    <b>cp100</b> — Defeitos a cada 100 unidades produzidas.<br>
+    <b>Meta</b> — Valor de referência (padrão 1541 PPM). Personalizável por mês/ano na aba Ajustes.<br>
+    <b>Pareto</b> — Gráfico 80/20 que mostra os tipos de defeito mais frequentes com percentual acumulado.<br>
+    <b>YoY</b> — Year-over-Year: variação percentual de um ano para outro.<br>
+    <b>Média móvel 3M</b> — Média dos últimos 3 meses, suaviza oscilações.<br>
+    <b>Heatmap</b> — Tabela com cores de intensidade proporcional ao valor.<br>
+    <b>Nota</b> — Número da notificação de qualidade no SAP (QM Notification).<br>
+    <b>Tipo de movimento 131/132</b> — Entradas de produção no SAP.</p>
+    <h4>5. Compartilhar configurações</h4>
+    <p>Para que todas as máquinas vejam os mesmos nomes de clientes, consultores e metas:</p>
+    <p>1) Na aba <b>⚙ Ajustes</b>, configure tudo desejado.<br>
+    2) Clique em <b>"Exportar config.json"</b> — será baixado um arquivo JSON.<br>
+    3) Coloque esse arquivo na <b>mesma pasta do HTML</b> na pasta compartilhada do servidor.<br>
+    4) Quando alguém abrir o dashboard, ele carrega automaticamente o <code>config.json</code>.<br>
+    5) Para atualizar: quem editou exporta o novo <code>config.json</code> e substitui o antigo.</p>
+    <h4>6. Exportar PDF</h4>
+    <p>Clique no botão <b>📄 PDF</b> na barra de filtros. O sistema percorre TODAS as 6 abas, captura cada uma como imagem e gera um PDF com os filtros ativos.</p>
+    <h4>7. Atualização incremental</h4>
+    <p>Pode carregar novos arquivos a qualquer momento — o sistema <b>detecta duplicatas pela chave única</b> e só adiciona registros novos. Útil para atualizar 2x por semana sem reprocessar tudo.</p>
+  </div>`;
+}
+
+// ====================================================================
+//  08 · AJUSTES
+// ====================================================================
 function renderSettings(){
-  const clientesArr = Object.entries(CONFIG.clientes).sort((a,b)=>a[1].nome.localeCompare(b[1].nome));
+  // Todos os códigos de cliente que aparecem nos dados + os cadastrados
+  const allCliCodes = new Set(Object.keys(CONFIG.clientes));
+  if(state.defeitos) state.defeitos.forEach(r=>allCliCodes.add(r.cliente));
+  const clientesArr=[...allCliCodes].sort((a,b)=>{
+    const na=CONFIG.clientes[a]?.nome||'';const nb=CONFIG.clientes[b]?.nome||'';
+    return na.localeCompare(nb)||(a-b);
+  });
+
+  // Todos os materiais nos dados + cadastrados
+  const allMatCodes = new Set(Object.keys(CONFIG.materiais));
+  if(state.producao) state.producao.forEach(r=>allMatCodes.add(r.material));
+  const matsArr=[...allMatCodes].sort();
+
+  // Anos para meta mensal
+  const anos=new Set();
+  if(state.defeitos)state.defeitos.forEach(r=>{if(r.ano)anos.add(r.ano);});
+  if(state.producao)state.producao.forEach(r=>{if(r.ano)anos.add(r.ano);});
+  // Adicionar 2 anos futuros
+  const maxAno=Math.max(...anos,new Date().getFullYear());
+  for(let y=maxAno;y<=maxAno+2;y++)anos.add(y);
+  const anosArr=[...anos].sort();
 
   document.getElementById('page-settings').innerHTML=`
-    <div class="config-info">
-      <b>💾 Como compartilhar configurações entre máquinas:</b><br>
-      1) Faça os ajustes desejados nesta aba.<br>
-      2) Clique em <b>"Exportar configurações"</b> — será baixado um arquivo <code>config.json</code>.<br>
-      3) Coloque esse arquivo na pasta compartilhada do servidor, junto com o HTML.<br>
-      4) Nas outras máquinas, clique em <b>"Importar configurações"</b> e selecione o arquivo.<br>
-      <i style="color:var(--dim)">O arquivo HTML tenta carregar automaticamente um <code>config.json</code> que esteja na mesma pasta.</i>
-    </div>
-
     <div class="settings-grid">
-
-      <!-- PPM / META -->
+      <!-- META & PPM -->
       <div class="settings-card">
-        <h3>🎯 Meta e Unidade do PPM</h3>
-        <div class="desc">Define a meta de PPM e como é exibida nos gráficos</div>
-        <div class="form-row">
-          <label>Meta PPM</label>
-          <input type="number" id="cfgMeta" value="${CONFIG.meta_ppm}" step="1">
+        <h3>🎯 Meta e Exibição do Indicador</h3>
+        <div class="form-row"><label>Meta global</label><input type="number" id="cfgMeta" value="${CONFIG.meta_ppm}" step="1"></div>
+        <div class="form-row"><label>Casas decimais</label>
+          <select id="cfgDec"><option value="0"${CONFIG.decimais_ppm===0?' selected':''}>0</option><option value="1"${CONFIG.decimais_ppm===1?' selected':''}>1</option><option value="2"${CONFIG.decimais_ppm===2?' selected':''}>2</option><option value="3"${CONFIG.decimais_ppm===3?' selected':''}>3</option></select>
         </div>
-        <div class="form-row">
-          <label>Período da meta</label>
-          <select id="cfgPeriodo">
-            <option value="ano"${CONFIG.meta_periodo==='ano'?' selected':''}>Ano</option>
-            <option value="mes"${CONFIG.meta_periodo==='mes'?' selected':''}>Mês</option>
-            <option value="dia"${CONFIG.meta_periodo==='dia'?' selected':''}>Dia</option>
-          </select>
-        </div>
-        <div class="form-row">
-          <label>Casas decimais do PPM</label>
-          <select id="cfgDec">
-            <option value="0"${CONFIG.decimais_ppm===0?' selected':''}>0 (1541)</option>
-            <option value="1"${CONFIG.decimais_ppm===1?' selected':''}>1 (1541,5)</option>
-            <option value="2"${CONFIG.decimais_ppm===2?' selected':''}>2 (1541,50)</option>
-            <option value="3"${CONFIG.decimais_ppm===3?' selected':''}>3 (1541,500)</option>
-          </select>
-        </div>
-        <div style="display:flex;gap:8px;margin-top:12px">
-          <button class="btn" id="btnSaveMeta">Aplicar</button>
-        </div>
+        <button class="btn" id="btnSaveMeta" style="margin-top:8px">Aplicar</button>
       </div>
 
       <!-- EXPORTAR / IMPORTAR -->
       <div class="settings-card">
-        <h3>💾 Compartilhar Configurações</h3>
-        <div class="desc">Exporta/importa o arquivo <code>config.json</code> para sincronizar entre máquinas</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
-          <button class="btn good" id="btnExport">⬇ Exportar config.json</button>
-          <label class="btn ghost" style="cursor:pointer">⬆ Importar config.json<input type="file" id="fileImport" accept=".json" style="display:none"></label>
-          <button class="btn bad" id="btnReset">↺ Restaurar padrão</button>
+        <h3>💾 Config. Compartilhadas</h3>
+        <div class="desc">Exporta/importa <code>config.json</code></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn good" id="btnExport">⬇ Exportar</button>
+          <label class="btn ghost" style="cursor:pointer">⬆ Importar<input type="file" id="fileImport" accept=".json" style="display:none"></label>
+          <button class="btn bad" id="btnReset">↺ Padrão</button>
         </div>
-        <div class="desc" style="margin-top:14px;padding:10px;background:var(--panel2);border-radius:4px">
-          <b>Última alteração:</b> <span id="lastMod">${new Date().toLocaleString('pt-BR')}</span>
+      </div>
+
+      <!-- METAS MENSAIS -->
+      <div class="settings-card" style="grid-column:span 2">
+        <h3>📅 Meta por Mês/Ano</h3>
+        <div class="desc">Deixe em branco para usar a meta global (${CONFIG.meta_ppm}). Adicione anos futuros automaticamente.</div>
+        <div class="meta-grid" id="metaGrid">
+          <table><thead><tr><th>Ano</th>${MESES_NOME.map(m=>`<th>${m}</th>`).join('')}</tr></thead><tbody>
+          ${anosArr.map(a=>`<tr><td class="year-lbl">${a}</td>${[1,2,3,4,5,6,7,8,9,10,11,12].map(m=>{const key=`${a}-${String(m).padStart(2,'0')}`;const val=CONFIG.metas_mensal[key]!==undefined?CONFIG.metas_mensal[key]:'';return`<td><input data-meta-key="${key}" value="${val}" placeholder="${CONFIG.meta_ppm}"></td>`;}).join('')}</tr>`).join('')}
+          </tbody></table>
         </div>
+        <button class="btn" id="btnSaveMetas" style="margin-top:10px">Salvar metas mensais</button>
       </div>
 
       <!-- MATERIAIS -->
       <div class="settings-card" style="grid-column:span 2">
         <h3>📦 Materiais</h3>
-        <div class="desc">Códigos SAP, nomes comerciais e vasilhames</div>
-        <div class="editable-list">
-          ${Object.entries(CONFIG.materiais).map(([cod,m])=>`
-            <div class="row" data-mat="${cod}" style="grid-template-columns:80px 120px 1fr 40px">
+        <div class="desc">Todos os códigos encontrados nos dados. Use o checkbox para ocultar materiais do dashboard.</div>
+        <div class="editable-list" id="listMat">
+          ${matsArr.map(cod=>{const m=CONFIG.materiais[cod]||{nome:'',vasilhame:'',visivel:true};return`
+            <div class="row" data-mat="${cod}" style="grid-template-columns:30px 80px 120px 1fr 40px">
+              <label class="vis-toggle"><input type="checkbox" data-vis="${cod}" ${m.visivel!==false?'checked':''}></label>
               <code>${cod}</code>
-              <input data-f="nome" value="${m.nome||''}" placeholder="P-13">
-              <input data-f="vasilhame" value="${m.vasilhame||''}" placeholder="Botijão 13kg">
+              <input data-f="nome" value="${m.nome||''}" placeholder="Nome">
+              <input data-f="vasilhame" value="${m.vasilhame||''}" placeholder="Vasilhame">
               <button class="del-btn" data-del="${cod}">×</button>
-            </div>`).join('')}
-        </div>
-        <div style="display:flex;gap:8px;margin-top:12px">
-          <input class="form-row" id="newMatCod" placeholder="Código" style="flex:0 0 100px;padding:7px 10px;background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:5px">
-          <input id="newMatNome" placeholder="Nome" style="flex:1;padding:7px 10px;background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:5px">
-          <input id="newMatVas" placeholder="Vasilhame" style="flex:1;padding:7px 10px;background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:5px">
-          <button class="btn" id="btnAddMat">Adicionar</button>
+            </div>`;}).join('')}
         </div>
       </div>
 
-      <!-- TIPOS DE DEFEITO -->
+      <!-- TIPOS -->
       <div class="settings-card">
         <h3>🔧 Tipos de Defeito</h3>
-        <div class="desc">Código SAP do dano → descrição</div>
         <input class="search-box" id="searchTipos" placeholder="Buscar…">
         <div class="editable-list" id="listTipos">
           ${Object.entries(CONFIG.tipos_defeito).sort().map(([cod,nome])=>`
             <div class="row" data-tipo="${cod}" style="grid-template-columns:80px 1fr 40px">
-              <code>${cod}</code>
-              <input data-f="nome" value="${nome}">
-              <button class="del-btn" data-del="${cod}">×</button>
+              <code>${cod}</code><input data-f="nome" value="${nome}"><button class="del-btn" data-del="${cod}">×</button>
             </div>`).join('')}
         </div>
-        <div style="display:flex;gap:6px;margin-top:10px">
-          <input id="newTipoCod" placeholder="Cód (ex: D026)" style="flex:0 0 110px;padding:7px 10px;background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:5px">
-          <input id="newTipoNome" placeholder="Descrição" style="flex:1;padding:7px 10px;background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:5px">
-          <button class="btn" id="btnAddTipo">+</button>
-        </div>
+        <div style="display:flex;gap:6px;margin-top:10px"><input id="newTipoCod" placeholder="D026" style="flex:0 0 90px;padding:7px;background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:5px"><input id="newTipoNome" placeholder="Descrição" style="flex:1;padding:7px;background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:5px"><button class="btn" id="btnAddTipo">+</button></div>
       </div>
 
       <!-- LOCAIS -->
       <div class="settings-card">
         <h3>📍 Locais do Defeito</h3>
-        <div class="desc">Código SAP do local → descrição</div>
         <input class="search-box" id="searchLocais" placeholder="Buscar…">
         <div class="editable-list" id="listLocais">
           ${Object.entries(CONFIG.locais_defeito).sort().map(([cod,nome])=>`
             <div class="row" data-local="${cod}" style="grid-template-columns:80px 1fr 40px">
-              <code>${cod}</code>
-              <input data-f="nome" value="${nome}">
-              <button class="del-btn" data-del="${cod}">×</button>
+              <code>${cod}</code><input data-f="nome" value="${nome}"><button class="del-btn" data-del="${cod}">×</button>
             </div>`).join('')}
         </div>
-        <div style="display:flex;gap:6px;margin-top:10px">
-          <input id="newLocalCod" placeholder="Cód (ex: L026)" style="flex:0 0 110px;padding:7px 10px;background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:5px">
-          <input id="newLocalNome" placeholder="Descrição" style="flex:1;padding:7px 10px;background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:5px">
-          <button class="btn" id="btnAddLocal">+</button>
-        </div>
+        <div style="display:flex;gap:6px;margin-top:10px"><input id="newLocalCod" placeholder="L026" style="flex:0 0 90px;padding:7px;background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:5px"><input id="newLocalNome" placeholder="Descrição" style="flex:1;padding:7px;background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:5px"><button class="btn" id="btnAddLocal">+</button></div>
       </div>
 
-      <!-- CLIENTES + CONSULTORES -->
+      <!-- CLIENTES & CONSULTORES -->
       <div class="settings-card" style="grid-column:span 2">
         <h3>👥 Clientes &amp; Consultores</h3>
-        <div class="desc">${clientesArr.length} clientes cadastrados · digite para buscar, edite inline</div>
-        <input class="search-box" id="searchCli" placeholder="Buscar por código, nome ou consultor…">
-        <div class="editable-list" id="listCli" style="max-height:400px">
-          ${clientesArr.map(([cod,c])=>`
-            <div class="row" data-cli="${cod}">
+        <div class="desc">${clientesArr.length} códigos (inclui todos encontrados nos dados). Não mapeados aparecem em branco.</div>
+        <input class="search-box" id="searchCli" placeholder="Buscar código, nome ou consultor…">
+        <div class="editable-list" id="listCli" style="max-height:420px">
+          ${clientesArr.map(cod=>{const c=CONFIG.clientes[cod]||{nome:'',consultor:''};return`
+            <div class="row" data-cli="${cod}" style="grid-template-columns:80px 1fr 1.2fr 40px">
               <code>${cod}</code>
               <input data-f="nome" value="${c.nome||''}" placeholder="Nome do cliente">
               <input data-f="consultor" value="${c.consultor||''}" placeholder="Consultor">
-              <button class="del-btn" data-del="${cod}" title="Remover">×</button>
-            </div>`).join('')}
+              <button class="del-btn" data-del="${cod}">×</button>
+            </div>`;}).join('')}
         </div>
         <div style="display:flex;gap:6px;margin-top:10px">
-          <input id="newCliCod" placeholder="Código" style="flex:0 0 90px;padding:7px 10px;background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:5px">
-          <input id="newCliNome" placeholder="Nome do cliente" style="flex:1.5;padding:7px 10px;background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:5px">
-          <input id="newCliCons" placeholder="Consultor" style="flex:1.2;padding:7px 10px;background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:5px">
+          <input id="newCliCod" placeholder="Código" style="flex:0 0 90px;padding:7px;background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:5px">
+          <input id="newCliNome" placeholder="Nome" style="flex:1.5;padding:7px;background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:5px">
+          <input id="newCliCons" placeholder="Consultor" style="flex:1.2;padding:7px;background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:5px">
           <button class="btn" id="btnAddCli">+</button>
         </div>
+        <div style="margin-top:12px;display:flex;gap:8px">
+          <button class="btn ghost" id="btnExportCli">⬇ Exportar Clientes/Consultores</button>
+          <label class="btn ghost" style="cursor:pointer">⬆ Importar Clientes/Consultores<input type="file" id="fileImportCli" accept=".json" style="display:none"></label>
+        </div>
       </div>
-
-    </div>
-  `;
+    </div>`;
 
   bindSettingsEvents();
 }
 
 function bindSettingsEvents(){
-  // Meta
-  document.getElementById('btnSaveMeta').addEventListener('click', ()=>{
-    CONFIG.meta_ppm = parseFloat(document.getElementById('cfgMeta').value)||1541;
-    CONFIG.meta_periodo = document.getElementById('cfgPeriodo').value;
-    CONFIG.decimais_ppm = parseInt(document.getElementById('cfgDec').value)||0;
-    toast('Meta atualizada');
-    if(state.defeitos&&state.producao)renderAll();
-  });
+  document.getElementById('btnSaveMeta').onclick=()=>{CONFIG.meta_ppm=parseFloat(document.getElementById('cfgMeta').value)||1541;CONFIG.decimais_ppm=parseInt(document.getElementById('cfgDec').value)||0;toast('Meta atualizada');if(state.defeitos&&state.producao)renderAll();};
+  document.getElementById('btnSaveMetas').onclick=()=>{document.querySelectorAll('[data-meta-key]').forEach(inp=>{const key=inp.dataset.metaKey;const v=inp.value.trim();if(v==='')delete CONFIG.metas_mensal[key];else CONFIG.metas_mensal[key]=Number(v);});toast('Metas mensais salvas');};
+  document.getElementById('btnExport').onclick=()=>{const blob=new Blob([JSON.stringify(CONFIG,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='config.json';a.click();toast('config.json exportado');};
+  document.getElementById('fileImport').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const cfg=JSON.parse(await f.text());CONFIG={...DEFAULT_CONFIG,...cfg};if(state.defeitos)reprocessData();toast('Configurações importadas');renderSettings();if(state.defeitos&&state.producao){populateFilters();renderAll();}}catch(err){toast('Erro: '+err.message,true);}};
+  document.getElementById('btnReset').onclick=()=>{if(!confirm('Restaurar padrão?'))return;CONFIG=JSON.parse(JSON.stringify(DEFAULT_CONFIG));if(state.defeitos)reprocessData();toast('Restaurado');renderSettings();if(state.defeitos&&state.producao){populateFilters();renderAll();}};
 
-  // Export
-  document.getElementById('btnExport').addEventListener('click', ()=>{
-    const blob = new Blob([JSON.stringify(CONFIG, null, 2)], {type:'application/json'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = 'config.json';
-    a.click(); URL.revokeObjectURL(url);
-    toast('config.json exportado — coloque na pasta compartilhada');
-  });
+  // Clientes inline
+  document.getElementById('listCli').addEventListener('change',e=>{if(!e.target.matches('input[data-f]'))return;const row=e.target.closest('.row');const cod=row.dataset.cli;if(!CONFIG.clientes[cod])CONFIG.clientes[cod]={nome:'',consultor:''};CONFIG.clientes[cod][e.target.dataset.f]=e.target.value.trim();if(state.defeitos)reprocessData();});
+  document.getElementById('listCli').addEventListener('click',e=>{if(!e.target.matches('.del-btn'))return;delete CONFIG.clientes[e.target.dataset.del];if(state.defeitos)reprocessData();renderSettings();});
+  document.getElementById('btnAddCli').onclick=()=>{const cod=document.getElementById('newCliCod').value.trim();if(!cod)return toast('Código obrigatório',true);CONFIG.clientes[cod]={nome:document.getElementById('newCliNome').value.trim(),consultor:document.getElementById('newCliCons').value.trim()};if(state.defeitos)reprocessData();toast('Adicionado');renderSettings();};
+  document.getElementById('searchCli').oninput=e=>{const q=e.target.value.toLowerCase();document.querySelectorAll('#listCli .row').forEach(r=>r.style.display=r.textContent.toLowerCase().includes(q)?'':'none');};
 
-  // Import
-  document.getElementById('fileImport').addEventListener('change', async e=>{
-    const f = e.target.files[0]; if(!f) return;
-    try{
-      const txt = await f.text();
-      const cfg = JSON.parse(txt);
-      CONFIG = {...DEFAULT_CONFIG, ...cfg};
-      if(state.defeitos) reprocessData();
-      toast('Configurações importadas');
-      renderSettings();
-      if(state.defeitos&&state.producao){populateFilters();renderAll();}
-    }catch(err){toast('Erro ao importar: '+err.message, true);}
-  });
-
-  // Reset
-  document.getElementById('btnReset').addEventListener('click', ()=>{
-    if(!confirm('Restaurar TODAS as configurações ao padrão?')) return;
-    CONFIG = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
-    if(state.defeitos) reprocessData();
-    toast('Configurações restauradas');
-    renderSettings();
-    if(state.defeitos&&state.producao){populateFilters();renderAll();}
-  });
-
-  // Clientes - inline edit
-  document.getElementById('listCli').addEventListener('change', e=>{
-    const input = e.target;
-    if(!input.matches('input[data-f]')) return;
-    const row = input.closest('.row');
-    const cod = row.dataset.cli;
-    const campo = input.dataset.f;
-    if(!CONFIG.clientes[cod]) CONFIG.clientes[cod] = {nome:'',consultor:''};
-    CONFIG.clientes[cod][campo] = input.value.trim();
-    if(state.defeitos) reprocessData();
-  });
-  document.getElementById('listCli').addEventListener('click', e=>{
-    if(!e.target.matches('.del-btn')) return;
-    const cod = e.target.dataset.del;
-    if(!confirm(`Remover cliente ${cod}?`)) return;
-    delete CONFIG.clientes[cod];
-    if(state.defeitos) reprocessData();
-    renderSettings();
-  });
-  document.getElementById('btnAddCli').addEventListener('click', ()=>{
-    const cod = document.getElementById('newCliCod').value.trim();
-    const nome = document.getElementById('newCliNome').value.trim();
-    const cons = document.getElementById('newCliCons').value.trim();
-    if(!cod || !nome) return toast('Preencha código e nome', true);
-    CONFIG.clientes[cod] = {nome, consultor:cons};
-    if(state.defeitos) reprocessData();
-    toast('Cliente adicionado');
-    renderSettings();
-  });
-  // Busca cliente
-  document.getElementById('searchCli').addEventListener('input', e=>{
-    const q = e.target.value.toLowerCase();
-    document.querySelectorAll('#listCli .row').forEach(r=>{
-      const txt = r.textContent.toLowerCase();
-      r.style.display = txt.includes(q)?'':'none';
-    });
-  });
+  // Clientes export/import separado
+  document.getElementById('btnExportCli').onclick=()=>{const blob=new Blob([JSON.stringify(CONFIG.clientes,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='clientes_consultores.json';a.click();toast('clientes_consultores.json exportado');};
+  document.getElementById('fileImportCli').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const data=JSON.parse(await f.text());CONFIG.clientes={...CONFIG.clientes,...data};if(state.defeitos)reprocessData();toast('Clientes importados');renderSettings();}catch(err){toast('Erro: '+err.message,true);}};
 
   // Tipos
-  document.getElementById('listTipos').addEventListener('change', e=>{
-    if(!e.target.matches('input[data-f]')) return;
-    const row = e.target.closest('.row');
-    const cod = row.dataset.tipo;
-    CONFIG.tipos_defeito[cod] = e.target.value.trim();
-  });
-  document.getElementById('listTipos').addEventListener('click', e=>{
-    if(!e.target.matches('.del-btn')) return;
-    const cod = e.target.dataset.del;
-    if(!confirm(`Remover tipo ${cod}?`)) return;
-    delete CONFIG.tipos_defeito[cod];
-    renderSettings();
-  });
-  document.getElementById('btnAddTipo').addEventListener('click', ()=>{
-    const cod = document.getElementById('newTipoCod').value.trim();
-    const nome = document.getElementById('newTipoNome').value.trim();
-    if(!cod || !nome) return toast('Preencha código e nome', true);
-    CONFIG.tipos_defeito[cod] = nome;
-    toast('Tipo adicionado');
-    renderSettings();
-  });
-  document.getElementById('searchTipos').addEventListener('input', e=>{
-    const q = e.target.value.toLowerCase();
-    document.querySelectorAll('#listTipos .row').forEach(r=>{
-      r.style.display = r.textContent.toLowerCase().includes(q)?'':'none';
-    });
-  });
+  document.getElementById('listTipos').addEventListener('change',e=>{if(!e.target.matches('input[data-f]'))return;CONFIG.tipos_defeito[e.target.closest('.row').dataset.tipo]=e.target.value.trim();});
+  document.getElementById('listTipos').addEventListener('click',e=>{if(!e.target.matches('.del-btn'))return;delete CONFIG.tipos_defeito[e.target.dataset.del];renderSettings();});
+  document.getElementById('btnAddTipo').onclick=()=>{const cod=document.getElementById('newTipoCod').value.trim();if(!cod)return toast('Código obrigatório',true);CONFIG.tipos_defeito[cod]=document.getElementById('newTipoNome').value.trim();toast('Adicionado');renderSettings();};
+  document.getElementById('searchTipos').oninput=e=>{const q=e.target.value.toLowerCase();document.querySelectorAll('#listTipos .row').forEach(r=>r.style.display=r.textContent.toLowerCase().includes(q)?'':'none');};
 
   // Locais
-  document.getElementById('listLocais').addEventListener('change', e=>{
-    if(!e.target.matches('input[data-f]')) return;
-    const row = e.target.closest('.row');
-    const cod = row.dataset.local;
-    CONFIG.locais_defeito[cod] = e.target.value.trim();
-  });
-  document.getElementById('listLocais').addEventListener('click', e=>{
-    if(!e.target.matches('.del-btn')) return;
-    const cod = e.target.dataset.del;
-    if(!confirm(`Remover local ${cod}?`)) return;
-    delete CONFIG.locais_defeito[cod];
-    renderSettings();
-  });
-  document.getElementById('btnAddLocal').addEventListener('click', ()=>{
-    const cod = document.getElementById('newLocalCod').value.trim();
-    const nome = document.getElementById('newLocalNome').value.trim();
-    if(!cod || !nome) return toast('Preencha código e nome', true);
-    CONFIG.locais_defeito[cod] = nome;
-    toast('Local adicionado');
-    renderSettings();
-  });
-  document.getElementById('searchLocais').addEventListener('input', e=>{
-    const q = e.target.value.toLowerCase();
-    document.querySelectorAll('#listLocais .row').forEach(r=>{
-      r.style.display = r.textContent.toLowerCase().includes(q)?'':'none';
-    });
-  });
+  document.getElementById('listLocais').addEventListener('change',e=>{if(!e.target.matches('input[data-f]'))return;CONFIG.locais_defeito[e.target.closest('.row').dataset.local]=e.target.value.trim();});
+  document.getElementById('listLocais').addEventListener('click',e=>{if(!e.target.matches('.del-btn'))return;delete CONFIG.locais_defeito[e.target.dataset.del];renderSettings();});
+  document.getElementById('btnAddLocal').onclick=()=>{const cod=document.getElementById('newLocalCod').value.trim();if(!cod)return toast('Código obrigatório',true);CONFIG.locais_defeito[cod]=document.getElementById('newLocalNome').value.trim();toast('Adicionado');renderSettings();};
+  document.getElementById('searchLocais').oninput=e=>{const q=e.target.value.toLowerCase();document.querySelectorAll('#listLocais .row').forEach(r=>r.style.display=r.textContent.toLowerCase().includes(q)?'':'none');};
 
   // Materiais
-  document.querySelectorAll('[data-mat] input').forEach(inp=>{
-    inp.addEventListener('change', e=>{
-      const row = e.target.closest('[data-mat]');
-      const cod = row.dataset.mat;
-      const campo = e.target.dataset.f;
-      if(!CONFIG.materiais[cod]) CONFIG.materiais[cod] = {nome:'',vasilhame:''};
-      CONFIG.materiais[cod][campo] = e.target.value.trim();
-    });
+  document.getElementById('listMat').addEventListener('change',e=>{
+    if(e.target.matches('[data-vis]')){const cod=e.target.dataset.vis;if(!CONFIG.materiais[cod])CONFIG.materiais[cod]={nome:'',vasilhame:'',visivel:true};CONFIG.materiais[cod].visivel=e.target.checked;return;}
+    if(!e.target.matches('input[data-f]'))return;const row=e.target.closest('.row');const cod=row.dataset.mat;if(!CONFIG.materiais[cod])CONFIG.materiais[cod]={nome:'',vasilhame:'',visivel:true};CONFIG.materiais[cod][e.target.dataset.f]=e.target.value.trim();
   });
-  document.querySelectorAll('[data-mat] .del-btn').forEach(b=>{
-    b.addEventListener('click', ()=>{
-      const cod = b.dataset.del;
-      if(!confirm(`Remover material ${cod}?`)) return;
-      delete CONFIG.materiais[cod];
-      renderSettings();
-    });
-  });
-  document.getElementById('btnAddMat').addEventListener('click', ()=>{
-    const cod = document.getElementById('newMatCod').value.trim();
-    const nome = document.getElementById('newMatNome').value.trim();
-    const vas = document.getElementById('newMatVas').value.trim();
-    if(!cod) return toast('Preencha o código', true);
-    CONFIG.materiais[cod] = {nome, vasilhame:vas};
-    toast('Material adicionado');
-    renderSettings();
-  });
+  document.getElementById('listMat').addEventListener('click',e=>{if(!e.target.matches('.del-btn'))return;delete CONFIG.materiais[e.target.dataset.del];renderSettings();});
 }
 
-/* ============================================================
-   CARREGAMENTO AUTOMÁTICO DE config.json
-   ============================================================ */
-(async function tryAutoLoadConfig(){
-  try{
-    const res = await fetch('config.json',{cache:'no-cache'});
-    if(res.ok){
-      const cfg = await res.json();
-      CONFIG = {...DEFAULT_CONFIG, ...cfg};
-      console.log('config.json carregado automaticamente');
-      toast('config.json carregado da pasta');
-    }
-  }catch(e){/* arquivo não existe ou CORS — sem problema, usa o padrão */}
+// ====================================================================
+//  PDF EXPORT
+// ====================================================================
+document.getElementById('btnPDF').addEventListener('click', async()=>{
+  if(!state.defeitos||!state.producao){toast('Carregue os dados primeiro',true);return;}
+  showLoading('Gerando PDF — capturando todas as abas…');
+  const pages=['overview','defects','clients','consultants','types','trends'];
+  const labels=['Visão Geral','Defeitos','Clientes','Consultores','Tipos & Locais','Tendências'];
+  const origPage=state.currentPage;
+  const {jsPDF}=window.jspdf;
+  const pdf=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+  let first=true;
+
+  for(let i=0;i<pages.length;i++){
+    // activate page
+    document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+    const pg=document.getElementById('page-'+pages[i]);pg.classList.add('active');
+    renderPage(pages[i]);
+    document.getElementById('loadMsg').textContent=`Capturando ${labels[i]}…`;
+    await new Promise(r=>setTimeout(r,600)); // wait for charts
+
+    try{
+      const canvas=await html2canvas(pg,{backgroundColor:'#0d1015',scale:1.5,logging:false,useCORS:true});
+      const imgData=canvas.toDataURL('image/jpeg',0.92);
+      if(!first)pdf.addPage();
+      first=false;
+      const pW=pdf.internal.pageSize.getWidth();const pH=pdf.internal.pageSize.getHeight();
+      const ratio=canvas.width/canvas.height;
+      let w=pW-10,h=w/ratio;
+      if(h>pH-10){h=pH-10;w=h*ratio;}
+      pdf.addImage(imgData,'JPEG',(pW-w)/2,(pH-h)/2,w,h);
+    }catch(err){console.error('PDF capture error:',err);}
+  }
+
+  pdf.save(`QualityDash_${new Date().toISOString().slice(0,10)}.pdf`);
+  // restore original page
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  document.getElementById('page-'+origPage).classList.add('active');
+  renderPage(origPage);
+  hideLoading();
+  toast('PDF gerado com sucesso');
+});
+
+// ====================================================================
+//  AUTO-LOAD config.json
+// ====================================================================
+(async function(){
+  try{const res=await fetch('config.json',{cache:'no-cache'});if(res.ok){const cfg=await res.json();CONFIG={...DEFAULT_CONFIG,...cfg};toast('config.json carregado');}}catch(e){}
 })();
 </script>
 </body>
