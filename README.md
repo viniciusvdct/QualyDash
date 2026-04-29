@@ -1,4 +1,3 @@
-# PROMPT DE CONTINUIDADE — Quality·Dash v4
 ## Dashboard de Indicadores de Qualidade (Defeitos × Produção)
 
 ---
